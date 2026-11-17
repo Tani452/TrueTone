@@ -93,6 +93,7 @@ const expectedFiles = [
     'src/routes/submission.routes.js',
     'src/services/guidelines.service.js',
     'src/services/pending.service.js',
+    'src/services/actions.service.js',
     'src/services/gemini.service.js',
     'src/controllers/review.controller.js',
     'src/controllers/publish.controller.js',

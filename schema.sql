@@ -98,6 +98,7 @@ CREATE TABLE logs (
     post JSONB NOT NULL,
     published_by BIGINT NOT NULL,
     issue JSONB,
+    timestamp TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL,
     created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL,
 
     -- Maintain audit integrity: prevent deleting users with logged brand violations
@@ -112,6 +113,7 @@ CREATE TABLE logs (
 CREATE INDEX idx_logs_published_by ON logs (published_by);
 
 -- 2. B-Tree on timestamp for chronologically ordered compliance reviews
+CREATE INDEX idx_logs_timestamp ON logs (timestamp DESC);
 CREATE INDEX idx_logs_created_at ON logs (created_at DESC);
 
 -- 3. Composite Index: specific user audit history over time (frequent query pattern)
@@ -135,6 +137,9 @@ CREATE TABLE actions (
     designation VARCHAR(100),
     cumulative_report JSONB NOT NULL,
     updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL,
+
+    -- Ensure one active cumulative report per user
+    CONSTRAINT uq_actions_user_id UNIQUE (user_id),
 
     -- Cascade delete user metrics if a user record is removed
     CONSTRAINT fk_actions_user_id FOREIGN KEY (user_id)

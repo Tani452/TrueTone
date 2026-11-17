@@ -180,7 +180,7 @@ VALUES
 -- 3. SEED: LOGS
 -- Audit trail of AI brand violations, error types, and remediation history
 -- =============================================================================
-INSERT INTO logs (post, published_by, issue, created_at)
+INSERT INTO logs (post, published_by, issue, timestamp, created_at)
 VALUES
 (
     '{
@@ -200,6 +200,7 @@ VALUES
             "required_remedy": "Rephrase to emphasize probabilistic testing and enterprise guardrails."
         }
     }'::jsonb,
+    NOW() - INTERVAL '3 days',
     NOW() - INTERVAL '3 days'
 ),
 (
@@ -220,6 +221,7 @@ VALUES
             "required_remedy": "Correction: world''s best or world-leading."
         }
     }'::jsonb,
+    NOW() - INTERVAL '2 days',
     NOW() - INTERVAL '2 days'
 ),
 (
@@ -240,6 +242,7 @@ VALUES
             "required_remedy": "Mandatory inclusion of standard disclaimer: Projections are estimates subject to market conditions."
         }
     }'::jsonb,
+    NOW() - INTERVAL '1 day 6 hours',
     NOW() - INTERVAL '1 day 6 hours'
 ),
 (
@@ -260,6 +263,7 @@ VALUES
             "required_remedy": "Contrast ratio is 3.8:1; increase to minimum 4.5:1."
         }
     }'::jsonb,
+    NOW() - INTERVAL '18 hours',
     NOW() - INTERVAL '18 hours'
 );
 

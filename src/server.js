@@ -10,12 +10,15 @@ require('dotenv').config({ path: path.resolve(__dirname, '../.env') });
 const app = require('./app');
 const db = require('./db');
 const { checkAndFinalizeExpiredVotes } = require('./services/pending.service');
+const { runWeeklyLogAnalysis } = require('./services/actions.service');
 
 const PORT = process.env.PORT || 3000;
 const server = http.createServer(app);
 
 // 60-second periodic background job to finalize expired pending votes
 let expireIntervalId = null;
+// Weekly background job to synthesize logs into cumulative actions reports (every 7 days)
+let weeklyAnalysisIntervalId = null;
 
 server.listen(PORT, async () => {
     console.log('==============================================================');
@@ -34,6 +37,12 @@ server.listen(PORT, async () => {
         expireIntervalId = setInterval(() => {
             checkAndFinalizeExpiredVotes().catch(e => console.warn('[EXPIRE-JOB-TICK]', e.message));
         }, 60000);
+
+        // Schedule weekly AI synthesis (7 days)
+        weeklyAnalysisIntervalId = setInterval(() => {
+            console.log('[ACTIONS-WEEKLY-JOB] Executing scheduled weekly log analysis...');
+            runWeeklyLogAnalysis(7).catch(e => console.warn('[ACTIONS-WEEKLY-JOB-TICK]', e.message));
+        }, 7 * 24 * 60 * 60 * 1000);
     } else {
         console.warn(`[DB-NOTICE] Database unreachable or not yet initialized: ${health.error}`);
         console.warn(`[DB-NOTICE] Run 'npm run db:setup' or 'docker compose up -d' to start PostgreSQL.`);
@@ -45,6 +54,10 @@ const gracefulShutdown = async (signal) => {
     if (expireIntervalId) {
         clearInterval(expireIntervalId);
         expireIntervalId = null;
+    }
+    if (weeklyAnalysisIntervalId) {
+        clearInterval(weeklyAnalysisIntervalId);
+        weeklyAnalysisIntervalId = null;
     }
     console.log(`\n[SHUTDOWN] Received ${signal}. Draining connection pool and closing server...`);
     server.close(async () => {

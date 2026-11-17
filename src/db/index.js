@@ -110,6 +110,12 @@ const checkHealth = async () => {
                 (SELECT count(*) FROM information_schema.tables WHERE table_schema = 'public') AS table_count
         `);
         const latencyMs = Date.now() - start;
+
+        // Ensure schema upgrades (e.g. logs.timestamp column) are non-destructively present
+        try {
+            await pool.query('ALTER TABLE logs ADD COLUMN IF NOT EXISTS timestamp TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP');
+        } catch (_) {}
+
         return {
             status: 'healthy',
             latencyMs,

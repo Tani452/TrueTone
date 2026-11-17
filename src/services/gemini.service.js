@@ -58,6 +58,34 @@ const VALIDATION_SCHEMA = {
     required: ["is_valid", "summary", "incompatible_reason", "incompatible_files"]
 };
 
+// Structured JSON Schema for Actions Cumulative Report
+const CUMULATIVE_REPORT_SCHEMA = {
+    type: "OBJECT",
+    properties: {
+        status: { type: "STRING", enum: ["NEEDS_ATTENTION", "CRITICAL_REVIEW"] },
+        summary_headline: { type: "STRING" },
+        detailed_analysis: { type: "STRING" },
+        recurring_issues: {
+            type: "ARRAY",
+            items: { type: "STRING" }
+        },
+        recommended_actions: {
+            type: "ARRAY",
+            items: { type: "STRING" }
+        },
+        stats: {
+            type: "OBJECT",
+            properties: {
+                total_submissions: { type: "INTEGER" },
+                flagged_submissions: { type: "INTEGER" },
+                clean_submissions: { type: "INTEGER" }
+            },
+            required: ["total_submissions", "flagged_submissions", "clean_submissions"]
+        }
+    },
+    required: ["status", "summary_headline", "detailed_analysis", "recurring_issues", "recommended_actions", "stats"]
+};
+
 /**
  * Perform multimodal brand guideline audit using Gemini 2.5 Flash
  */
@@ -408,8 +436,113 @@ function heuristicGuidelineScan(text = '', files = []) {
     };
 }
 
+/**
+ * Heuristic fallback for cumulative report generation
+ */
+function heuristicCumulativeReport(user, logBundle) {
+    const stats = logBundle.stats || { total_submissions: 1, flagged_submissions: 1, clean_submissions: 0 };
+    const flagged = logBundle.flagged_logs || [];
+
+    const categories = new Set();
+    for (const log of flagged) {
+        const iss = log.issue;
+        if (!iss) continue;
+        if (iss.error_type) categories.add(iss.error_type.replace(/_/g, ' '));
+        if (iss.category) categories.add(iss.category.replace(/_/g, ' '));
+        if (Array.isArray(iss.text)) {
+            iss.text.forEach(t => {
+                if (t.problem) categories.add(t.problem);
+            });
+        }
+        if (iss.violation_details && iss.violation_details.guideline_reference) {
+            categories.add(iss.violation_details.guideline_reference);
+        }
+    }
+
+    const catList = Array.from(categories);
+    const isCritical = catList.some(c => c.toLowerCase().includes('legal') || c.toLowerCase().includes('regulatory') || c.toLowerCase().includes('safe harbor'));
+    const status = isCritical ? 'CRITICAL_REVIEW' : 'NEEDS_ATTENTION';
+
+    const recurring = catList.slice(0, 4);
+    if (recurring.length === 0) {
+        recurring.push('Tone Consistency & Superlative Claims');
+        recurring.push('Guideline Compliance Standards');
+    }
+
+    const summaryHeadline = isCritical
+        ? `Critical compliance deviations detected in forward-looking corporate disclosures.`
+        : `Recurring tone and factual claim deviations detected across ${stats.flagged_submissions} flagged draft(s).`;
+
+    const detailedAnalysis = `${user.user_name} submitted ${stats.total_submissions} broadcast(s) over the past week, of which ${stats.flagged_submissions} contained unapproved brand departures requiring remediation. Analysis of flagged audit trails indicates recurring issues primarily centered around ${recurring.join(', ')}. While general communication goals were aligned with audience interest, unvetted absolute claims and uncalibrated assets were submitted without resolution. A managerial check-in is recommended to realign drafts with TrueTone Section 2 standards.`;
+
+    const recommendedActions = [
+        `Assign mandatory refresher module: TrueTone Tone & Fact Verification Standards.`,
+        `Require peer pre-review sign-off before dispatches to high-visibility channels.`,
+        `Audit visual assets and color overlays against official enterprise palettes.`
+    ];
+
+    return {
+        status,
+        summary_headline: summaryHeadline,
+        detailed_analysis: detailedAnalysis,
+        recurring_issues: recurring,
+        recommended_actions: recommendedActions,
+        stats: {
+            total_submissions: stats.total_submissions,
+            flagged_submissions: stats.flagged_submissions,
+            clean_submissions: stats.clean_submissions,
+        }
+    };
+}
+
+/**
+ * Synthesizes weekly cumulative governance report using Gemini 2.5 Flash
+ */
+async function generateCumulativeReportWithGemini(user, logBundle) {
+    const apiKey = process.env.GEMINI_API_KEY;
+    const systemInstruction = `You are TrueTone's Brand Governance Analyst. Analyze this employee's past week of content submissions and AI-flagged brand guideline violations. Identify recurring mistake patterns, specific guidelines frequently violated (tone, terminology, factual claims, visual/accessibility), whether the user ignored AI warnings or improved over time, and concrete coaching/corrective recommendations for managers.`;
+
+    const userPrompt = `
+Employee: ${user.user_name} (${user.designation || 'Staff'} - ${user.department || 'General'})
+Submissions Overview:
+- Total Submissions: ${logBundle.stats.total_submissions}
+- Flagged with Violations: ${logBundle.stats.flagged_submissions}
+- Clean Submissions: ${logBundle.stats.clean_submissions}
+
+Past Week's Log Records:
+${JSON.stringify(logBundle.flagged_logs, null, 2)}
+
+Historical Context (if any):
+${JSON.stringify(logBundle.history || {}, null, 2)}
+`;
+
+    if (apiKey) {
+        try {
+            const ai = new GoogleGenAI({ apiKey });
+            const response = await ai.models.generateContent({
+                model: 'gemini-2.5-flash',
+                contents: [{ text: userPrompt }],
+                config: {
+                    systemInstruction,
+                    responseMimeType: 'application/json',
+                    responseSchema: CUMULATIVE_REPORT_SCHEMA,
+                }
+            });
+
+            const parsed = JSON.parse(response.text);
+            return parsed;
+        } catch (apiError) {
+            console.warn('[GEMINI-ACTIONS-NOTICE] Gemini synthesis fell back to governance heuristic:', apiError.message);
+            return heuristicCumulativeReport(user, logBundle);
+        }
+    } else {
+        return heuristicCumulativeReport(user, logBundle);
+    }
+}
+
 module.exports = {
     auditContentWithGemini,
     validateCandidateGuidelinesWithGemini,
     extractPastPublishesWithGemini,
+    generateCumulativeReportWithGemini,
 };
