@@ -97,7 +97,7 @@ CREATE TABLE logs (
     id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     post JSONB NOT NULL,
     published_by BIGINT NOT NULL,
-    issue JSONB NOT NULL,
+    issue JSONB,
     created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL,
 
     -- Maintain audit integrity: prevent deleting users with logged brand violations

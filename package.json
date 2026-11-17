@@ -10,7 +10,7 @@
     "db:migrate": "node src/db/init.js --migrate",
     "db:seed": "node src/db/init.js --seed",
     "db:setup": "node src/db/init.js --setup",
-    "test": "node test/db-test.js"
+    "test": "node test/db-test.js && node test/publish-flow-test.js"
   },
   "keywords": [
     "postgresql",
@@ -23,9 +23,11 @@
   "author": "TrueTone Team",
   "license": "MIT",
   "dependencies": {
+    "@google/genai": "^3.4.0",
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
+    "multer": "^2.5.0",
     "pg": "^8.13.1"
   },
   "devDependencies": {

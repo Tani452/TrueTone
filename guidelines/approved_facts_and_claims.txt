@@ -1,0 +1,16 @@
+TrueTone Approved Facts, Statistics & Regulatory Compliance (2026 Mandate)
+
+1. STATISTICAL CLAIMS & PERFORMANCE BENCHMARKS:
+- "Sub-10ms latency": Verified for GIN-indexed PostgreSQL token lookups on dataset sizes under 10 million rows.
+- "99.9% consistency": Benchmarked on corporate communications datasets under standard enterprise guardrail testing.
+- "100% renewable compute": Approved only when referencing Q3 2026 data center compute nodes powered by verified microgrid partners.
+- PROHIBITED CLAIM: Any claim stating TrueTone is "guaranteed #1 in the world" or "zero margin of error" is prohibited by corporate compliance.
+
+2. STATUTORY DISCLAIMERS & SAFE HARBOR (SEC MANDATE):
+- Any statement discussing revenue targets, projected ARR growth (e.g., "growth exceeding 240%"), or forward-looking AI model releases must include the statutory safe harbor note:
+  "Projections and forward-looking statements are estimates subject to regulatory review and market fluctuations under Section 27A of the Securities Act."
+
+3. PRICING & PROMOTIONAL CLAIMS:
+- TrueTone does not offer "lifetime 100% free unlimited" commercial tiers.
+- Any discount mentioned must explicitly state the applicable contract duration (e.g., "15% discount on annual enterprise agreements").
+- Never publish unauthorized partner codes or promotional referral links.

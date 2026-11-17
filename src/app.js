@@ -15,6 +15,7 @@ const logsRoutes = require('./routes/logs.routes');
 const actionsRoutes = require('./routes/actions.routes');
 const usersRoutes = require('./routes/users.routes');
 const guidelinesRoutes = require('./routes/guidelines.routes');
+const submissionRoutes = require('./routes/submission.routes');
 
 const app = express();
 
@@ -23,8 +24,9 @@ app.use(cors());
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 
-// Serve frontend static files
+// Serve frontend static files and uploaded media
 app.use(express.static(path.join(__dirname, '../public')));
+app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
 // Mount Tab Backends cleanly separated
 app.use('/api/review', reviewRoutes);
@@ -33,6 +35,7 @@ app.use('/api/logs', logsRoutes);
 app.use('/api/actions', actionsRoutes);
 app.use('/api/users', usersRoutes);
 app.use('/api/guidelines', guidelinesRoutes);
+app.use('/api/publish-submission', submissionRoutes);
 
 // Database Health & Performance Diagnostics Endpoint
 app.get('/api/health', async (req, res) => {
