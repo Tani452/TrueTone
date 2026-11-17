@@ -1481,3 +1481,290 @@ tr:hover td {
     border-radius: 6px;
     background: #ffffff;
 }
+
+/* =============================================================================
+   5. GUIDELINES TAB & KNOWLEDGE BASE MANAGEMENT SYSTEM
+   ============================================================================= */
+
+/* Guidelines Workspace Header & Dropdown */
+.guidelines-header-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+    gap: 16px;
+    position: relative;
+}
+
+.guidelines-header-text h2 {
+    font-size: 1.45rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    letter-spacing: -0.02em;
+}
+
+.guidelines-header-text p {
+    font-size: 0.86rem;
+    color: var(--text-secondary);
+    margin-top: 4px;
+    max-width: 640px;
+}
+
+/* Upload Files Dropdown Button & Menu */
+.upload-dropdown-container {
+    position: relative;
+}
+
+#upload-guidelines-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 18px;
+    font-size: 0.88rem;
+    font-weight: 600;
+}
+
+#guidelines-upload-dropdown {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    width: 320px;
+    background: var(--bg-surface);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-md);
+    box-shadow: 0 14px 35px rgba(0, 0, 0, 0.65);
+    padding: 8px;
+    display: none;
+    flex-direction: column;
+    gap: 6px;
+    z-index: 1000;
+}
+
+#guidelines-upload-dropdown.show {
+    display: flex;
+    animation: dropdownPop 0.15s ease-out;
+}
+
+.guidelines-dropdown-option {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 10px 12px;
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: var(--radius-sm);
+    color: var(--text-primary);
+    cursor: pointer;
+    text-align: left;
+    transition: all 0.15s;
+    width: 100%;
+}
+
+.guidelines-dropdown-option:hover {
+    background: var(--bg-surface-elevated);
+    border-color: var(--border-strong);
+}
+
+.guidelines-dropdown-icon {
+    font-size: 1.4rem;
+    line-height: 1;
+    margin-top: 2px;
+}
+
+.guidelines-dropdown-label {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.guidelines-dropdown-subtext {
+    font-size: 0.74rem;
+    color: var(--text-secondary);
+    margin-top: 2px;
+    line-height: 1.35;
+}
+
+/* Status / Processing Banner */
+#guidelines-status-banner {
+    display: none;
+    margin-bottom: 22px;
+}
+
+.status-loading-spinner {
+    width: 18px;
+    height: 18px;
+    border: 2px solid rgba(59, 130, 246, 0.3);
+    border-top-color: #3b82f6;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    flex-shrink: 0;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Active Guidelines Directory Grid */
+.guidelines-directory-section {
+    margin-top: 14px;
+}
+
+.section-title-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+.section-title-row h3 {
+    font-size: 1.15rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.guidelines-cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 16px;
+    margin-bottom: 26px;
+}
+
+.guideline-file-card {
+    background: var(--bg-surface-elevated);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-md);
+    padding: 18px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 14px;
+    transition: all 0.18s ease;
+    box-shadow: var(--shadow-card);
+}
+
+.guideline-file-card:hover {
+    border-color: #3b82f6;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.5);
+}
+
+.guideline-file-top {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+}
+
+.guideline-file-badge {
+    padding: 4px 8px;
+    border-radius: 6px;
+    background: rgba(6, 182, 212, 0.15);
+    border: 1px solid rgba(6, 182, 212, 0.3);
+    color: #67e8f9;
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    flex-shrink: 0;
+}
+
+.guideline-file-name {
+    font-size: 0.94rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    word-break: break-all;
+    line-height: 1.35;
+}
+
+.guideline-file-meta {
+    font-size: 0.74rem;
+    color: var(--text-muted);
+    margin-top: 4px;
+    display: flex;
+    gap: 8px;
+}
+
+.guideline-file-bottom {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-top: 1px solid var(--border-subtle);
+    padding-top: 12px;
+}
+
+/* Incompatible Warning Box */
+#incompatible-warning-box {
+    background: rgba(244, 63, 94, 0.1);
+    border: 1px solid rgba(244, 63, 94, 0.4);
+    border-left: 4px solid #ef4444;
+    border-radius: var(--radius-sm);
+    padding: 18px 20px;
+    margin-bottom: 24px;
+    display: none;
+    animation: fadeInView 0.2s ease-out;
+}
+
+.warning-box-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.warning-box-title {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #fda4af;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.warning-box-body {
+    font-size: 0.85rem;
+    color: #fecdd3;
+    line-height: 1.5;
+}
+
+.warning-box-files {
+    margin-top: 8px;
+    padding-left: 20px;
+    font-size: 0.8rem;
+    color: #cbd5e1;
+}
+
+/* Extracted Past Data Preview Card */
+.extracted-preview-card {
+    background: var(--bg-surface);
+    border: 1px solid rgba(16, 185, 129, 0.4);
+    border-left: 4px solid #10b981;
+    border-radius: var(--radius-md);
+    padding: 22px;
+    margin-bottom: 26px;
+    animation: fadeInView 0.2s ease-out;
+}
+
+.extracted-markdown-viewport {
+    background: #090d16;
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-sm);
+    padding: 18px;
+    max-height: 380px;
+    overflow-y: auto;
+    font-size: 0.85rem;
+    color: #cbd5e1;
+    line-height: 1.6;
+    margin-top: 12px;
+}
+
+.extracted-markdown-viewport h3 {
+    color: #6ee7b7;
+    margin-top: 14px;
+    margin-bottom: 6px;
+    font-size: 0.92rem;
+}
+
+.extracted-markdown-viewport ul {
+    padding-left: 20px;
+    margin-bottom: 10px;
+}
