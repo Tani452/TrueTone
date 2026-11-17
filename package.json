@@ -10,7 +10,7 @@
     "db:migrate": "node src/db/init.js --migrate",
     "db:seed": "node src/db/init.js --seed",
     "db:setup": "node src/db/init.js --setup",
-    "test": "node test/db-test.js && node test/publish-flow-test.js && node test/guidelines-flow-test.js"
+    "test": "node test/db-test.js && node test/publish-flow-test.js && node test/guidelines-flow-test.js && node test/reviews-flow-test.js"
   },
   "keywords": [
     "postgresql",

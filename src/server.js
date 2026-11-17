@@ -9,9 +9,13 @@ require('dotenv').config({ path: path.resolve(__dirname, '../.env') });
 
 const app = require('./app');
 const db = require('./db');
+const { checkAndFinalizeExpiredVotes } = require('./services/pending.service');
 
 const PORT = process.env.PORT || 3000;
 const server = http.createServer(app);
+
+// 60-second periodic background job to finalize expired pending votes
+let expireIntervalId = null;
 
 server.listen(PORT, async () => {
     console.log('==============================================================');
@@ -25,6 +29,11 @@ server.listen(PORT, async () => {
     const health = await db.checkHealth();
     if (health.status === 'healthy') {
         console.log(`[DB-READY] Connected successfully (${health.latencyMs}ms latency). ${health.tableCount} tables found.`);
+        // Run initial check and start background poller
+        checkAndFinalizeExpiredVotes().catch(e => console.warn('[EXPIRE-JOB-STARTUP]', e.message));
+        expireIntervalId = setInterval(() => {
+            checkAndFinalizeExpiredVotes().catch(e => console.warn('[EXPIRE-JOB-TICK]', e.message));
+        }, 60000);
     } else {
         console.warn(`[DB-NOTICE] Database unreachable or not yet initialized: ${health.error}`);
         console.warn(`[DB-NOTICE] Run 'npm run db:setup' or 'docker compose up -d' to start PostgreSQL.`);
@@ -33,6 +42,10 @@ server.listen(PORT, async () => {
 
 // Graceful process shutdown handler
 const gracefulShutdown = async (signal) => {
+    if (expireIntervalId) {
+        clearInterval(expireIntervalId);
+        expireIntervalId = null;
+    }
     console.log(`\n[SHUTDOWN] Received ${signal}. Draining connection pool and closing server...`);
     server.close(async () => {
         try {

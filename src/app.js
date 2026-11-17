@@ -10,6 +10,7 @@ const db = require('./db');
 
 // Import dedicated route handlers for each tab
 const reviewRoutes = require('./routes/review.routes');
+const pendingRoutes = require('./routes/pending.routes');
 const publishRoutes = require('./routes/publish.routes');
 const logsRoutes = require('./routes/logs.routes');
 const actionsRoutes = require('./routes/actions.routes');
@@ -30,6 +31,7 @@ app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
 // Mount Tab Backends cleanly separated
 app.use('/api/review', reviewRoutes);
+app.use('/api/pending', pendingRoutes);
 app.use('/api/publish', publishRoutes);
 app.use('/api/logs', logsRoutes);
 app.use('/api/actions', actionsRoutes);

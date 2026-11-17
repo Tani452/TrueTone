@@ -250,6 +250,14 @@ window.TrueTone = {
      * =========================================================================
      */
     navigate(tabId) {
+        // Clear active review poller and floating popovers if navigating away from reviews tab
+        if (tabId !== 'reviews' && window.ttReviewsPollTimer) {
+            clearInterval(window.ttReviewsPollTimer);
+            window.ttReviewsPollTimer = null;
+        }
+        const danglingPopover = document.getElementById('tt-review-issue-popover');
+        if (danglingPopover) danglingPopover.remove();
+
         this.activeTabId = tabId;
 
         // Update active class on sidebar buttons
