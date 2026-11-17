@@ -3,287 +3,134 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TrueTone | High-Performance Brand Tone & Governance Platform</title>
+    <title>TrueTone | High-Performance Brand Tone Governance Platform</title>
     <link rel="stylesheet" href="/css/style.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 </head>
 <body>
     <div class="app-container">
-        <!-- Sidebar Navigation -->
-        <aside class="sidebar">
+        <!-- =================================================================== -->
+        <!-- 1. PERSISTENT LEFT SIDEBAR                                         -->
+        <!-- =================================================================== -->
+        <aside class="sidebar" id="app-sidebar">
+            <!-- Brand Logo -->
             <div class="brand">
                 <div class="brand-icon">T</div>
                 <div class="brand-text">
                     <h1>TrueTone</h1>
-                    <span>Enterprise Governance</span>
+                    <span>Brand Governance</span>
                 </div>
             </div>
 
-            <ul class="nav-menu">
-                <li class="nav-item active" data-tab="review">
-                    <button>
-                        <span>📝</span>
-                        <span>Review Queue</span>
-                        <span class="badge" id="badge-pending-count">0</span>
-                    </button>
-                </li>
-                <li class="nav-item" data-tab="publish">
-                    <button>
-                        <span>📢</span>
-                        <span>Published Content</span>
-                        <span class="badge" id="badge-published-count">0</span>
-                    </button>
-                </li>
-                <li class="nav-item" data-tab="logs">
-                    <button>
-                        <span>🛡️</span>
-                        <span>AI Compliance Logs</span>
-                        <span class="badge" id="badge-logs-count">0</span>
-                    </button>
-                </li>
-                <li class="nav-item" data-tab="actions">
-                    <button>
-                        <span>📊</span>
-                        <span>Actions & Reports</span>
-                        <span class="badge" id="badge-actions-count">0</span>
-                    </button>
-                </li>
-                <li class="nav-item" data-tab="users">
-                    <button>
-                        <span>👥</span>
-                        <span>Team & Directory</span>
-                        <span class="badge" id="badge-users-count">0</span>
-                    </button>
-                </li>
-            </ul>
+            <!-- Demo Persona Switcher (For Hackathon & Role Verification) -->
+            <div class="persona-switcher-box">
+                <div class="sidebar-section-label">
+                    <span>Demo Role Switcher</span>
+                    <span style="font-size: 0.6rem; color: var(--text-muted);">HACKATHON MODE</span>
+                </div>
+                <select id="role-switcher-select" class="persona-select" title="Switch active persona to test conditional sidebar rendering">
+                    <!-- Dynamically populated by app.js from DEMO_PERSONAS -->
+                </select>
+            </div>
 
+            <!-- Compact User Profile Badge & Live Permissions -->
+            <div class="user-profile-badge" id="user-profile-card">
+                <div class="user-profile-header">
+                    <div class="user-avatar" id="user-avatar-initials">SJ</div>
+                    <div class="user-info">
+                        <div class="user-name" id="user-profile-name">Sarah Jenkins</div>
+                        <div class="user-designation" id="user-profile-designation">Senior Content Creator</div>
+                    </div>
+                </div>
+                <div class="user-dept" id="user-profile-dept">Content & Creative Marketing</div>
+                
+                <!-- Live Permission Flags from PostgreSQL users table -->
+                <div class="user-permissions-strip" title="Live permissions from PostgreSQL users table">
+                    <span class="perm-pill active" id="perm-pill-post">POST: Y</span>
+                    <span class="perm-pill inactive" id="perm-pill-approve">APPROVE: N</span>
+                    <span class="perm-pill inactive" id="perm-pill-action">ACT: N</span>
+                </div>
+            </div>
+
+            <!-- Role-Based Navigation Buttons Container -->
+            <nav class="sidebar-nav" id="sidebar-nav-container">
+                <div class="sidebar-section-label" style="padding: 0 4px; margin-bottom: 8px;">
+                    <span>Navigation</span>
+                </div>
+                <ul id="sidebar-nav-list" class="nav-menu">
+                    <!-- Conditionally rendered by app.js based on can_post, can_approve, can_take_action -->
+                </ul>
+            </nav>
+
+            <!-- Sidebar Footer with Live PostgreSQL Health Indicator -->
             <div class="sidebar-footer">
                 <div class="db-status-pill">
                     <div class="pulse-dot" id="db-health-dot"></div>
                     <div>
-                        <strong id="db-health-status">Checking DB...</strong>
-                        <div id="db-health-meta" style="font-size: 0.7rem; color: #64748b;">PostgreSQL Pool</div>
+                        <strong id="db-health-status" style="font-size: 0.78rem;">PostgreSQL Pool</strong>
+                        <div id="db-health-meta" style="font-size: 0.68rem; color: #64748b;">Checking health...</div>
                     </div>
                 </div>
             </div>
         </aside>
 
-        <!-- Main Workspace -->
+        <!-- =================================================================== -->
+        <!-- 2. MAIN CONTENT VIEWPORT                                           -->
+        <!-- =================================================================== -->
         <main class="main-wrapper">
+            <!-- App Top Header -->
             <header class="top-bar">
                 <div class="top-bar-title">
-                    <h2 id="page-title">Review Queue</h2>
+                    <h2 id="page-title-text">Workspace</h2>
                 </div>
                 <div class="top-bar-meta">
-                    <span id="active-db-label">Database: TrueTone (pg-pool)</span>
-                    <button class="btn-refresh" id="global-refresh-btn">
+                    <span class="role-tag-pill" id="top-bar-user-badge">User Profile</span>
+                    <button class="btn-refresh" id="global-refresh-btn" title="Refresh current tab data from PostgreSQL">
                         <span>↻</span> Refresh
                     </button>
                 </div>
             </header>
 
-            <div class="content-area">
-                <!-- TAB 1: REVIEW QUEUE -->
-                <section id="tab-review" class="tab-pane active">
-                    <div class="stat-grid">
-                        <div class="stat-card cyan">
-                            <div class="label">Pending Review</div>
-                            <div class="value" id="stat-review-pending">0</div>
-                            <div class="subtext">Awaiting human sign-off</div>
-                        </div>
-                        <div class="stat-card yellow">
-                            <div class="label">AI Flags Detected</div>
-                            <div class="value" id="stat-review-flagged">0</div>
-                            <div class="subtext">Requires tone or legal review</div>
-                        </div>
-                        <div class="stat-card green">
-                            <div class="label">Avg Quality Score</div>
-                            <div class="value" id="stat-review-score">91%</div>
-                            <div class="subtext">Calculated via AI engine</div>
-                        </div>
-                    </div>
-
-                    <div class="controls-header">
-                        <div class="filter-pills" id="review-filter-pills">
-                            <button class="filter-pill active" data-filter="unapproved">Pending Only (approved = 'N')</button>
-                            <button class="filter-pill" data-filter="all">All Records</button>
-                        </div>
-                        <button class="btn-primary" id="btn-open-submit-modal">+ New Post Draft</button>
-                    </div>
-
-                    <div class="feed-list" id="review-posts-container">
-                        <div style="color: #94a3b8; padding: 20px;">Loading review queue...</div>
-                    </div>
-                </section>
-
-                <!-- TAB 2: PUBLISHED CONTENT -->
-                <section id="tab-publish" class="tab-pane">
-                    <div class="stat-grid">
-                        <div class="stat-card green">
-                            <div class="label">Total Published</div>
-                            <div class="value" id="stat-publish-total">0</div>
-                            <div class="subtext">Live on multi-channels</div>
-                        </div>
-                        <div class="stat-card blue">
-                            <div class="label">LinkedIn Posts</div>
-                            <div class="value" id="stat-publish-linkedin">0</div>
-                            <div class="subtext">Verified professional reach</div>
-                        </div>
-                        <div class="stat-card cyan">
-                            <div class="label">Twitter/X Broadcasts</div>
-                            <div class="value" id="stat-publish-twitter">0</div>
-                            <div class="subtext">Real-time developer feeds</div>
-                        </div>
-                    </div>
-
-                    <div class="controls-header">
-                        <div class="filter-pills" id="publish-channel-pills">
-                            <button class="filter-pill active" data-channel="">All Channels</button>
-                            <button class="filter-pill" data-channel="LinkedIn">LinkedIn</button>
-                            <button class="filter-pill" data-channel="Twitter/X">Twitter/X</button>
-                            <button class="filter-pill" data-channel="Company Blog">Blog</button>
-                        </div>
-                        <input type="text" class="search-input" id="publish-search-input" placeholder="Search published titles...">
-                    </div>
-
-                    <div class="feed-list" id="published-posts-container">
-                        <div style="color: #94a3b8; padding: 20px;">Loading published catalog...</div>
-                    </div>
-                </section>
-
-                <!-- TAB 3: AI COMPLIANCE LOGS -->
-                <section id="tab-logs" class="tab-pane">
-                    <div class="stat-grid">
-                        <div class="stat-card red">
-                            <div class="label">Critical Violations</div>
-                            <div class="value" id="stat-logs-critical">0</div>
-                            <div class="subtext">Prohibited claims / legal risk</div>
-                        </div>
-                        <div class="stat-card yellow">
-                            <div class="label">Tone & Voice Alerts</div>
-                            <div class="value" id="stat-logs-tone">0</div>
-                            <div class="subtext">Off-brand vocabulary</div>
-                        </div>
-                        <div class="stat-card cyan">
-                            <div class="label">Accessibility Warnings</div>
-                            <div class="value" id="stat-logs-a11y">0</div>
-                            <div class="subtext">WCAG contrast & readability</div>
-                        </div>
-                    </div>
-
-                    <div class="controls-header">
-                        <div class="filter-pills" id="logs-severity-pills">
-                            <button class="filter-pill active" data-severity="">All Severities</button>
-                            <button class="filter-pill" data-severity="CRITICAL">Critical</button>
-                            <button class="filter-pill" data-severity="HIGH">High</button>
-                            <button class="filter-pill" data-severity="MEDIUM">Medium</button>
-                            <button class="filter-pill" data-severity="LOW">Low</button>
-                        </div>
-                    </div>
-
-                    <div class="feed-list" id="logs-list-container">
-                        <div style="color: #94a3b8; padding: 20px;">Loading AI audit logs...</div>
-                    </div>
-                </section>
-
-                <!-- TAB 4: ACTIONS & REPORTS -->
-                <section id="tab-actions" class="tab-pane">
-                    <div class="stat-grid">
-                        <div class="stat-card blue">
-                            <div class="label">Tracked Creators</div>
-                            <div class="value" id="stat-actions-users">0</div>
-                            <div class="subtext">Cumulative activity profiles</div>
-                        </div>
-                        <div class="stat-card green">
-                            <div class="label">Negligible Risk Users</div>
-                            <div class="value" id="stat-actions-lowrisk">0</div>
-                            <div class="subtext">Pass rate > 95%</div>
-                        </div>
-                        <div class="stat-card yellow">
-                            <div class="label">Corrective Actions</div>
-                            <div class="value" id="stat-actions-interventions">0</div>
-                            <div class="subtext">Guideline coaching logged</div>
-                        </div>
-                    </div>
-
-                    <div class="table-container">
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>User ID</th>
-                                    <th>Employee</th>
-                                    <th>Designation</th>
-                                    <th>Pass Rate</th>
-                                    <th>Risk Tier</th>
-                                    <th>Top Error Trends</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody id="actions-table-body">
-                                <tr><td colspan="7" style="text-align:center;">Loading action reports...</td></tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </section>
-
-                <!-- TAB 5: TEAM & DIRECTORY -->
-                <section id="tab-users" class="tab-pane">
-                    <div class="controls-header">
-                        <div class="filter-pills" id="users-dept-pills">
-                            <button class="filter-pill active" data-dept="">All Departments</button>
-                        </div>
-                        <button class="btn-primary" id="btn-open-new-user-modal">+ Add Member</button>
-                    </div>
-
-                    <div class="table-container">
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>ID</th>
-                                    <th>Name</th>
-                                    <th>Department</th>
-                                    <th>Designation</th>
-                                    <th>Contact</th>
-                                    <th>Can Post</th>
-                                    <th>Can Approve</th>
-                                    <th>Can Act</th>
-                                    <th>Quick Toggle</th>
-                                </tr>
-                            </thead>
-                            <tbody id="users-table-body">
-                                <tr><td colspan="9" style="text-align:center;">Loading team directory...</td></tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </section>
+            <!-- Dynamic Workspace Content Viewport -->
+            <!-- Each tab handler (publish_tab, guidelines_tab, reviews_tab, action_tab) clears & renders here -->
+            <div id="main-workspace" class="workspace-viewport">
+                <!-- Dynamically populated by tab handler functions -->
             </div>
         </main>
     </div>
 
-    <!-- Modals Container -->
+    <!-- Generic Modal Dialog for Approvals / Enforcements / Payloads -->
     <div class="modal-overlay" id="generic-modal">
         <div class="modal-box">
             <div class="modal-header">
-                <h3 id="modal-title">Modal Title</h3>
+                <h3 id="modal-title">Dialog Title</h3>
                 <button class="btn-close" id="modal-close-btn">&times;</button>
             </div>
             <div id="modal-content">
-                <!-- Dynamically populated -->
+                <!-- Dynamically populated by openModal() -->
             </div>
         </div>
     </div>
 
-    <!-- Notification Toast Container -->
+    <!-- High-Contrast Toast Container -->
     <div id="toast-container"></div>
 
-    <!-- Modular Tab Scripts -->
-    <script src="/js/app.js"></script>
-    <script src="/js/review.tab.js"></script>
+    <!-- Tab Modules (Defining exact function names) -->
+    <script src="/js/tabs/publish.tab.js"></script>
+    <script src="/js/tabs/guidelines.tab.js"></script>
+    <script src="/js/tabs/reviews.tab.js"></script>
+    <script src="/js/tabs/action.tab.js"></script>
+
+    <!-- Legacy / Modular Components for full backend test compatibility -->
     <script src="/js/publish.tab.js"></script>
+    <script src="/js/review.tab.js"></script>
     <script src="/js/logs.tab.js"></script>
     <script src="/js/actions.tab.js"></script>
     <script src="/js/users.tab.js"></script>
+
+    <!-- Main Orchestrator -->
+    <script src="/js/app.js"></script>
 </body>
 </html>

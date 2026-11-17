@@ -14,6 +14,7 @@ const publishRoutes = require('./routes/publish.routes');
 const logsRoutes = require('./routes/logs.routes');
 const actionsRoutes = require('./routes/actions.routes');
 const usersRoutes = require('./routes/users.routes');
+const guidelinesRoutes = require('./routes/guidelines.routes');
 
 const app = express();
 
@@ -31,6 +32,7 @@ app.use('/api/publish', publishRoutes);
 app.use('/api/logs', logsRoutes);
 app.use('/api/actions', actionsRoutes);
 app.use('/api/users', usersRoutes);
+app.use('/api/guidelines', guidelinesRoutes);
 
 // Database Health & Performance Diagnostics Endpoint
 app.get('/api/health', async (req, res) => {
