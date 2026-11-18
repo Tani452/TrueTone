@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,8 +8,11 @@
     <link rel="stylesheet" href="/css/style.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;600;700;800;900&family=Rajdhani:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        rel="stylesheet">
 </head>
+
 <body>
     <div class="app-container">
         <!-- =================================================================== -->
@@ -30,7 +34,8 @@
                     <span>Demo Role Switcher</span>
                     <span style="font-size: 0.6rem; color: var(--text-muted);">HACKATHON MODE</span>
                 </div>
-                <select id="role-switcher-select" class="persona-select" title="Switch active persona to test conditional sidebar rendering">
+                <select id="role-switcher-select" class="persona-select"
+                    title="Switch active persona to test conditional sidebar rendering">
                     <!-- Dynamically populated by app.js from DEMO_PERSONAS -->
                 </select>
             </div>
@@ -45,7 +50,7 @@
                     </div>
                 </div>
                 <div class="user-dept" id="user-profile-dept">Content & Creative Marketing</div>
-                
+
                 <!-- Live Permission Flags from PostgreSQL users table -->
                 <div class="user-permissions-strip" title="Live permissions from PostgreSQL users table">
                     <span class="perm-pill active" id="perm-pill-post">POST: Y</span>
@@ -87,7 +92,8 @@
                 </div>
                 <div class="top-bar-meta">
                     <span class="role-tag-pill" id="top-bar-user-badge">User Profile</span>
-                    <button class="btn-refresh" id="global-refresh-btn" title="Refresh current tab data from PostgreSQL">
+                    <button class="btn-refresh" id="global-refresh-btn"
+                        title="Refresh current tab data from PostgreSQL">
                         <span>↻</span> Refresh
                     </button>
                 </div>
@@ -133,4 +139,5 @@
     <!-- Main Orchestrator -->
     <script src="/js/app.js"></script>
 </body>
+
 </html>
