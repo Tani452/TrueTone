@@ -76,6 +76,7 @@ VALUES
     1,
     'N',
     '{
+        "status": "UNAPPROVED",
         "ai_brand_score": 68,
         "compliance_status": "FLAGGED_FOR_HUMAN_REVIEW",
         "ai_flags": [
@@ -109,10 +110,12 @@ VALUES
     NOW() - INTERVAL '1 hour 15 minutes',
     2,
     0,
-    'N',
+    'Y',
     '{
-        "ai_brand_score": 96,
+        "status": "APPROVED",
         "compliance_status": "READY_FOR_FINAL_SIGN_OFF",
+        "final_decision": "COMMUNITY_CONSENSUS_APPROVED",
+        "ai_brand_score": 96,
         "ai_flags": [],
         "reviewer_notes": "Elena Rostova: Third-party audit certificate verified. Ready for publish pending director approval."
     }'::jsonb
@@ -133,8 +136,10 @@ VALUES
     3,
     'N',
     '{
-        "ai_brand_score": 38,
+        "status": "REJECTED",
         "compliance_status": "REJECTED_BRAND_DEVIATION",
+        "final_decision": "COMMUNITY_CONSENSUS_REJECTED",
+        "ai_brand_score": 38,
         "ai_flags": [
             {
                 "rule": "BRAND_VOICE_TONE_DISTORTION",
@@ -168,6 +173,7 @@ VALUES
     0,
     'N',
     '{
+        "status": "UNAPPROVED",
         "ai_brand_score": 92,
         "compliance_status": "AWAITING_PEER_REVIEW",
         "ai_flags": [],

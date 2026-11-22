@@ -31,6 +31,48 @@ function countTotalComments(commentsArray) {
 async function checkAndFinalizeExpiredVotes() {
     try {
         await db.withTransaction(async (client) => {
+            // Auto-synchronize legacy seeded pending statuses if unpopulated
+            try {
+                await client.query(`
+                    UPDATE pending
+                    SET overall_review = jsonb_set(
+                        jsonb_set(
+                            COALESCE(overall_review, '{}'::jsonb),
+                            '{status}',
+                            '"REJECTED"'
+                        ),
+                        '{final_decision}',
+                        '"COMMUNITY_CONSENSUS_REJECTED"'
+                    )
+                    WHERE (
+                        overall_review->>'compliance_status' ILIKE '%REJECT%'
+                        OR overall_review->>'compliance_status' = 'REJECTED_BRAND_DEVIATION'
+                    )
+                    AND COALESCE(overall_review->>'status', '') != 'REJECTED'
+                `);
+
+                await client.query(`
+                    UPDATE pending
+                    SET approved = 'Y',
+                        overall_review = jsonb_set(
+                            jsonb_set(
+                                COALESCE(overall_review, '{}'::jsonb),
+                                '{status}',
+                                '"APPROVED"'
+                            ),
+                            '{final_decision}',
+                            '"COMMUNITY_CONSENSUS_APPROVED"'
+                        )
+                    WHERE (
+                        overall_review->>'compliance_status' = 'READY_FOR_FINAL_SIGN_OFF'
+                        OR (approved = 'Y' AND COALESCE(overall_review->>'status', '') != 'APPROVED')
+                    )
+                    AND COALESCE(overall_review->>'status', '') != 'APPROVED'
+                `);
+            } catch (syncErr) {
+                // Non-critical if table is locked or in-memory
+            }
+
             const queryText = `
                 SELECT id, post, timestamp, vote_approve, vote_not_approve, overall_review
                 FROM pending
@@ -123,7 +165,7 @@ async function updateAuthorReport(client, authorId, decision, unresolvedIssues =
             const history = Array.isArray(currentReport.historical_activity) ? currentReport.historical_activity : [];
             history.push({
                 date: new Date().toISOString().split('T')[0],
-                action: decision === 'APPROVED' 
+                action: decision === 'APPROVED'
                     ? 'Post approved by 5-day community consensus and published'
                     : 'Post rejected by 5-day community review due to unresolved brand deviations',
                 status: decision,
@@ -163,6 +205,31 @@ function findCommentRecursive(commentsArray, targetCommentId) {
 }
 
 /**
+ * Resolves uniform status across pending post records:
+ * 'APPROVED' | 'REJECTED' | 'UNAPPROVED'
+ */
+function resolvePostStatus(row) {
+    if (!row) return 'UNAPPROVED';
+    const rev = row.overall_review || {};
+    if (
+        row.approved === 'Y' ||
+        (rev.status && String(rev.status).toUpperCase() === 'APPROVED') ||
+        (rev.compliance_status && String(rev.compliance_status).toUpperCase().includes('READY')) ||
+        (rev.final_decision && String(rev.final_decision).toUpperCase().includes('APPROVED'))
+    ) {
+        return 'APPROVED';
+    }
+    if (
+        (rev.status && String(rev.status).toUpperCase() === 'REJECTED') ||
+        (rev.compliance_status && String(rev.compliance_status).toUpperCase().includes('REJECT')) ||
+        (rev.final_decision && String(rev.final_decision).toUpperCase().includes('REJECT'))
+    ) {
+        return 'REJECTED';
+    }
+    return 'UNAPPROVED';
+}
+
+/**
  * Get pending posts list with optional filter
  */
 async function getPendingList(filter = 'all') {
@@ -173,11 +240,28 @@ async function getPendingList(filter = 'all') {
     const params = [];
 
     if (filter === 'open') {
-        whereClause = `WHERE COALESCE(overall_review->>'status', 'UNAPPROVED') = 'UNAPPROVED' AND timestamp > NOW() - INTERVAL '5 days'`;
+        whereClause = `
+            WHERE (approved = 'N' OR approved IS NULL)
+              AND COALESCE(overall_review->>'status', 'UNAPPROVED') NOT IN ('APPROVED', 'REJECTED')
+              AND COALESCE(overall_review->>'compliance_status', '') NOT ILIKE '%REJECT%'
+              AND COALESCE(overall_review->>'compliance_status', '') NOT ILIKE '%READY%'
+              AND COALESCE(overall_review->>'final_decision', '') NOT ILIKE '%APPROVED%'
+              AND COALESCE(overall_review->>'final_decision', '') NOT ILIKE '%REJECT%'
+              AND timestamp > NOW() - INTERVAL '5 days'
+        `;
     } else if (filter === 'approved') {
-        whereClause = `WHERE COALESCE(overall_review->>'status', '') = 'APPROVED'`;
+        whereClause = `
+            WHERE (approved = 'Y'
+               OR COALESCE(overall_review->>'status', '') = 'APPROVED'
+               OR COALESCE(overall_review->>'compliance_status', '') ILIKE '%READY%'
+               OR COALESCE(overall_review->>'final_decision', '') ILIKE '%APPROVED%')
+        `;
     } else if (filter === 'rejected') {
-        whereClause = `WHERE COALESCE(overall_review->>'status', '') = 'REJECTED'`;
+        whereClause = `
+            WHERE (COALESCE(overall_review->>'status', '') = 'REJECTED'
+               OR COALESCE(overall_review->>'compliance_status', '') ILIKE '%REJECT%'
+               OR COALESCE(overall_review->>'final_decision', '') ILIKE '%REJECT%')
+        `;
     }
 
     const queryText = `
@@ -194,7 +278,7 @@ async function getPendingList(filter = 'all') {
         const postTimestamp = new Date(row.timestamp).getTime();
         const expiresAt = new Date(postTimestamp + 5 * 24 * 60 * 60 * 1000);
         const timeRemainingMs = Math.max(0, expiresAt.getTime() - now);
-        const status = (row.overall_review && row.overall_review.status) || (row.approved === 'Y' ? 'APPROVED' : 'UNAPPROVED');
+        const status = resolvePostStatus(row);
         const isVotingOpen = status === 'UNAPPROVED' && timeRemainingMs > 0;
         const comments = (row.overall_review && row.overall_review.reviewer_comments) || [];
 
@@ -229,7 +313,7 @@ async function getPendingById(id) {
     const expiresAt = new Date(postTimestamp + 5 * 24 * 60 * 60 * 1000);
     const now = Date.now();
     const timeRemainingMs = Math.max(0, expiresAt.getTime() - now);
-    const status = (row.overall_review && row.overall_review.status) || (row.approved === 'Y' ? 'APPROVED' : 'UNAPPROVED');
+    const status = resolvePostStatus(row);
     const isVotingOpen = status === 'UNAPPROVED' && timeRemainingMs > 0;
     const comments = (row.overall_review && row.overall_review.reviewer_comments) || [];
 
@@ -281,7 +365,7 @@ async function castVote(postId, userId, voteType) {
 
         const row = selRes.rows[0];
         const currentReview = row.overall_review || {};
-        const status = currentReview.status || (row.approved === 'Y' ? 'APPROVED' : 'UNAPPROVED');
+        const status = resolvePostStatus(row);
         const postTimestamp = new Date(row.timestamp).getTime();
         const expiresAt = postTimestamp + 5 * 24 * 60 * 60 * 1000;
 
@@ -577,7 +661,7 @@ async function forceFinalizePost(postId) {
             published_id: publishedId,
             vote_approve: row.vote_approve,
             vote_not_approve: row.vote_not_approve,
-            message: isApproved 
+            message: isApproved
                 ? `Simulated 5 days elapsed: Post approved with ${row.vote_approve} Yes vs ${row.vote_not_approve} No, and published!`
                 : `Simulated 5 days elapsed: Post rejected with ${row.vote_approve} Yes vs ${row.vote_not_approve} No, and blocked from publishing.`,
         };

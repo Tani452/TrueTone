@@ -300,11 +300,12 @@
         // Bind filter tab buttons
         const filterBtns = workspace.querySelectorAll('.reviews-filter-btn');
         filterBtns.forEach(btn => {
-            btn.addEventListener('click', () => {
+            btn.addEventListener('click', async () => {
+                const targetFilter = btn.getAttribute('data-filter');
                 filterBtns.forEach(b => b.classList.remove('active'));
                 btn.classList.add('active');
-                currentFilter = btn.getAttribute('data-filter');
-                fetchAndDisplayQueue(false);
+                currentFilter = targetFilter;
+                await fetchAndDisplayQueue(true);
             });
         });
 
@@ -313,9 +314,10 @@
     }
 
     /**
-     * Fetch and render queue items (used initially and during background poll)
+     * Fetch and render queue items (used initially, upon filter changes, and during background poll)
+     * @param {boolean} isReset - When true, cleanly clears grid and rebuilds DOM for initial load or filter switch
      */
-    async function fetchAndDisplayQueue(isInitial = false) {
+    async function fetchAndDisplayQueue(isReset = false) {
         if (activeDetailPendingId !== null) return; // Do not overwrite if user is inspecting detail
 
         const grid = document.getElementById('reviews-queue-grid');
@@ -323,7 +325,7 @@
         if (!grid) return;
 
         try {
-            const res = await fetch(`/api/pending?filter=${currentFilter}`);
+            const res = await fetch(`/api/pending?filter=${encodeURIComponent(currentFilter)}`);
             const json = await res.json();
             if (!json.success) throw new Error(json.error || 'Failed to fetch queue');
 
@@ -333,20 +335,53 @@
             }
 
             if (items.length === 0) {
+                const filterLabels = {
+                    all: 'All Submissions',
+                    open: 'Under Review',
+                    approved: 'Approved',
+                    rejected: 'Blocked'
+                };
+                const activeLabel = filterLabels[currentFilter] || currentFilter;
+
                 grid.innerHTML = `
-                    <div style="background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 48px; text-align: center; color: var(--text-muted);">
+                    <div class="tt-queue-empty-state" style="background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 48px; text-align: center; color: var(--text-muted);">
                         <div style="font-size: 2.2rem; margin-bottom: 12px;">🛡️</div>
                         <h3 style="color: var(--text-primary); margin-bottom: 6px;">Queue is Clean</h3>
-                        <p style="font-size: 0.88rem;">No submissions matching current filter: <strong>"${currentFilter}"</strong>.</p>
+                        <p style="font-size: 0.88rem; margin-bottom: ${currentFilter === 'all' ? '0' : '16px'};">
+                            No submissions matching filter: <strong>"${escapeHtml(activeLabel)}"</strong>.
+                        </p>
+                        ${currentFilter !== 'all' ? `
+                            <button type="button" class="btn-reset-queue-filter" id="btn-reset-queue-filter" style="background: rgba(6, 182, 212, 0.12); border: 1px solid var(--accent-cyan); color: var(--accent-cyan); padding: 8px 18px; border-radius: 6px; cursor: pointer; font-size: 0.82rem; font-weight: 600; font-family: var(--font-mono); transition: all 0.2s ease;">
+                                &larr; View All Submissions
+                            </button>
+                        ` : ''}
                     </div>
                 `;
+
+                const resetBtn = grid.querySelector('#btn-reset-queue-filter');
+                if (resetBtn) {
+                    resetBtn.addEventListener('click', () => {
+                        const allBtn = document.querySelector('.reviews-filter-btn[data-filter="all"]');
+                        if (allBtn) {
+                            allBtn.click();
+                        } else {
+                            currentFilter = 'all';
+                            fetchAndDisplayQueue(true);
+                        }
+                    });
+                }
                 return;
             }
 
-            if (isInitial) {
+            // Check if grid is currently empty or showing the placeholder
+            const hasExistingCards = grid.querySelector('.review-pending-card') !== null;
+
+            if (isReset || !hasExistingCards) {
                 grid.innerHTML = '';
+                knownPendingIds.clear();
                 items.forEach(record => {
-                    knownPendingIds.add(String(record.id));
+                    const idStr = String(record.id);
+                    knownPendingIds.add(idStr);
                     const card = createPendingCardElement(record, false);
                     grid.appendChild(card);
                 });
@@ -354,13 +389,42 @@
                 // Background polling sync: check for brand-new items vs existing updates
                 const fetchedIds = new Set(items.map(it => String(it.id)));
 
-                // Check for new records
-                for (const record of items) {
+                // 1. Remove cards that are no longer part of this filtered view
+                const currentCards = grid.querySelectorAll('.review-pending-card');
+                currentCards.forEach(card => {
+                    const cardId = card.getAttribute('data-id');
+                    if (cardId && !fetchedIds.has(String(cardId))) {
+                        card.remove();
+                        knownPendingIds.delete(String(cardId));
+                    }
+                });
+
+                // 2. Re-check if removal left grid empty
+                if (grid.querySelectorAll('.review-pending-card').length === 0 && items.length === 0) {
+                    return;
+                }
+
+                // 3. Update existing cards or prepend brand-new records
+                for (let i = 0; i < items.length; i++) {
+                    const record = items[i];
                     const idStr = String(record.id);
-                    if (!knownPendingIds.has(idStr)) {
+                    const existingCard = document.getElementById(`pending-card-${record.id}`);
+
+                    if (!existingCard) {
+                        // Brand-new record
                         knownPendingIds.add(idStr);
                         const newCard = createPendingCardElement(record, true);
-                        grid.insertBefore(newCard, grid.firstChild);
+                        if (i === 0) {
+                            grid.insertBefore(newCard, grid.firstChild);
+                        } else {
+                            const prevRecord = items[i - 1];
+                            const prevCard = prevRecord ? document.getElementById(`pending-card-${prevRecord.id}`) : null;
+                            if (prevCard && prevCard.nextSibling) {
+                                grid.insertBefore(newCard, prevCard.nextSibling);
+                            } else {
+                                grid.appendChild(newCard);
+                            }
+                        }
 
                         const author = (record.post && record.post.author_name) || 'Author';
                         if (window.TrueTone && typeof window.TrueTone.showToast === 'function') {
@@ -368,17 +432,15 @@
                         }
                     } else {
                         // In-place update of vote counts and status without losing scroll
-                        const existingCard = document.getElementById(`pending-card-${record.id}`);
-                        if (existingCard) {
-                            const newCard = createPendingCardElement(record, false);
-                            existingCard.replaceWith(newCard);
-                        }
+                        const updatedCard = createPendingCardElement(record, false);
+                        existingCard.replaceWith(updatedCard);
+                        knownPendingIds.add(idStr);
                     }
                 }
             }
         } catch (err) {
             console.error('[REVIEWS-QUEUE-FETCH-ERROR]', err);
-            if (isInitial && grid) {
+            if (isReset && grid) {
                 grid.innerHTML = `<div style="color: var(--accent-rose); padding: 24px; text-align: center;">Error loading queue: ${escapeHtml(err.message)}</div>`;
             }
         }
