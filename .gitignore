@@ -1,0 +1,5 @@
+.env
+generate_*.js
+scratch_*.js
+*.pdf
+*.png

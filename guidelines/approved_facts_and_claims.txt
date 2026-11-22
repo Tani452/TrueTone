@@ -1,1 +1,7 @@
-  No ues of the word "xyz"1
+APPROVED FACT SHEET & MANDATES
+
+1. Infrastructure: Powered by certified renewable cloud inference nodes as of Q3 2026.
+2. Latency Benchmarks: Verified sub-10ms query execution across PostgreSQL GIN indexing.
+3. Unverified Claims: Any metric, percentage, or performance claim not explicitly listed in this document must be flagged as unverified.
+4. Statutory Note: Any announcement containing future release dates or schedules (e.g. "begins Q4") must include:
+   "Projections and forward-looking statements are estimates subject to Section 27A."

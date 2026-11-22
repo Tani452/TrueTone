@@ -147,6 +147,9 @@ AUDIT RULES:
                 const mimeType = file.mimetype || 'application/octet-stream';
                 if (mimeType.startsWith('image/') || mimeType === 'application/pdf') {
                     contents.push({
+                        text: `Attached File [${file.originalname}]:`
+                    });
+                    contents.push({
                         inlineData: {
                             data: file.buffer.toString('base64'),
                             mimeType,
@@ -371,14 +374,30 @@ function heuristicExtractPastPublishes(files = []) {
 
 function cleanGeminiOutput(raw, originalText, files) {
     const textIssues = Array.isArray(raw.text) ? raw.text.filter(t => t.problem_in && originalText.includes(t.problem_in)) : [];
-    const badFiles = Array.isArray(raw.bad_files) ? raw.bad_files : [];
-    const goodFiles = Array.isArray(raw.good_files) ? raw.good_files : [];
+    let badFiles = Array.isArray(raw.bad_files) ? raw.bad_files : [];
+    let goodFiles = Array.isArray(raw.good_files) ? raw.good_files : [];
 
     const fileNames = files.map(f => f.originalname);
-    const accounted = new Set([...badFiles.map(b => b.file_name), ...goodFiles]);
+
+    // Map bad_files to actual uploaded file names so matching is always 100% exact
+    badFiles = badFiles.map(b => {
+        const matched = files.find(f => {
+            const fName = (f.originalname || '').toLowerCase().trim();
+            const bName = (b.file_name || '').toLowerCase().trim();
+            return fName === bName || fName.includes(bName) || bName.includes(fName);
+        }) || (files.length === 1 ? files[0] : null);
+
+        return {
+            ...b,
+            file_name: matched ? matched.originalname : b.file_name
+        };
+    });
+
+    const badNameSet = new Set(badFiles.map(b => b.file_name));
+    goodFiles = goodFiles.filter(fn => !badNameSet.has(fn));
 
     fileNames.forEach(fn => {
-        if (!accounted.has(fn)) {
+        if (!badNameSet.has(fn) && !goodFiles.includes(fn)) {
             goodFiles.push(fn);
         }
     });

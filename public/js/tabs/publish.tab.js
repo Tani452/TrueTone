@@ -48,7 +48,7 @@ function publish_tab() {
             <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 6px;">
                 <span class="ai-disclosure-badge">
                     <span>✨</span>
-                    <span>Powered by Gemini 2.5 Flash &bull; Checked against approved guidelines</span>
+                    <span>Powered by Gemini &bull; Checked against approved guidelines</span>
                 </span>
                 <span style="font-size: 0.74rem; color: var(--text-muted);">
                     Author: <strong style="color: var(--text-primary);">${escapeHtml(currentUser.user_name)}</strong> (${escapeHtml(currentUser.department)})
@@ -413,9 +413,15 @@ function publish_tab() {
                     _uid: `tt_issue_${issueUidCounter++}`
                 })),
                 bad_files: (data.bad_files || []).map(b => {
-                    const matchedFileObj = file_array.find(f => f.name === b.file_name);
+                    const matchedFileObj = file_array.find(f => {
+                        const fName = (f.name || '').toLowerCase().trim();
+                        const bName = (b.file_name || '').toLowerCase().trim();
+                        return fName === bName || fName.includes(bName) || bName.includes(fName);
+                    }) || (file_array.length === 1 ? file_array[0] : null);
+
                     return {
                         ...b,
+                        file_name: matchedFileObj ? matchedFileObj.name : b.file_name,
                         _uid: `tt_bad_file_${issueUidCounter++}`,
                         file_obj: matchedFileObj || null
                     };
@@ -469,15 +475,73 @@ function publish_tab() {
             }
         } else {
             statusBanner.className = 'banner-notice read-only';
-            statusBanner.innerHTML = `
-                <div style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
-                    <div>
-                        <strong>⚠️ ${totalUnresolved} Brand Guideline Deviation(s) Detected:</strong>
-                        <span>Click highlighted items in red to accept fixes (✓) or dismiss (✕).</span>
+            const instructions = [];
+            if (unresolvedText > 0) {
+                instructions.push('Click highlighted text in red to accept fixes (✓) or dismiss (✕)');
+            }
+            if (unresolvedFiles > 0) {
+                instructions.push('Review the asset violation(s) detailed below');
+            }
+
+            let fileIssuesHtml = '';
+            if (unresolvedFiles > 0) {
+                fileIssuesHtml = `
+                    <div style="margin-top: 14px; border-top: 1px solid rgba(255, 132, 0, 0.3); padding-top: 12px; display: flex; flex-direction: column; gap: 10px; width: 100%;">
+                        <div style="display: flex; align-items: center; gap: 8px; font-weight: 700; color: #ff5277; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em;">
+                            <span>🚨</span>
+                            <span>Detected Violation(s) in Uploaded Files (${unresolvedFiles})</span>
+                        </div>
+                        ${currentReviewResult.bad_files.map(b => `
+                            <div style="background: rgba(8, 14, 28, 0.85); border: 1px solid rgba(255, 82, 119, 0.4); border-radius: 6px; padding: 12px 14px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; flex-wrap: wrap; gap: 6px;">
+                                    <span style="font-weight: 700; color: #f8fafc; font-size: 0.9rem; display: flex; align-items: center; gap: 6px;">
+                                        <span>📄</span>
+                                        <span>${escapeHtml(b.file_name)}</span>
+                                    </span>
+                                    <div style="display: flex; gap: 8px; align-items: center;">
+                                        <span style="font-size: 0.72rem; color: #ff5277; background: rgba(255, 82, 119, 0.15); border: 1px solid #ff5277; padding: 2px 8px; border-radius: 4px; font-weight: 700; text-transform: uppercase;">Flagged Violation</span>
+                                        <button type="button" class="btn-remove-bad-file" data-filename="${escapeHtml(b.file_name)}" style="background: rgba(255, 82, 119, 0.2); border: 1px solid #ff5277; color: #ff8fa3; padding: 3px 10px; border-radius: 4px; font-size: 0.76rem; cursor: pointer; font-weight: 600;">🗑️ Remove File</button>
+                                    </div>
+                                </div>
+                                <div style="margin-bottom: 8px; font-size: 0.86rem; line-height: 1.4; color: #fca5a5;">
+                                    <strong style="color: #ff6b81;">Violation:</strong> ${escapeHtml(b.problem)}
+                                </div>
+                                <div style="background: rgba(6, 182, 212, 0.09); border-left: 3px solid #06b6d4; padding: 8px 12px; border-radius: 4px; font-size: 0.83rem; line-height: 1.4; color: #e2e8f0;">
+                                    <div style="font-size: 0.7rem; color: #38bdf8; font-weight: 700; text-transform: uppercase; margin-bottom: 2px; letter-spacing: 0.05em;">Recommended Remedy</div>
+                                    <span>${escapeHtml(b.suggestion)}</span>
+                                </div>
+                            </div>
+                        `).join('')}
                     </div>
-                    <span class="tag-badge critical">${totalUnresolved} Unresolved</span>
+                `;
+            }
+
+            statusBanner.innerHTML = `
+                <div style="display: flex; flex-direction: column; width: 100%;">
+                    <div style="display: flex; align-items: center; justify-content: space-between; width: 100%; flex-wrap: wrap; gap: 8px;">
+                        <div>
+                            <strong>⚠️ ${totalUnresolved} Brand Guideline Deviation(s) Detected:</strong>
+                            <span style="margin-left: 6px;">${instructions.join(' • ')}</span>
+                        </div>
+                        <span class="tag-badge critical">${totalUnresolved} Unresolved</span>
+                    </div>
+                    ${fileIssuesHtml}
                 </div>
             `;
+
+            // Attach listeners to remove bad file buttons
+            statusBanner.querySelectorAll('.btn-remove-bad-file').forEach(btn => {
+                btn.onclick = () => {
+                    const fn = btn.dataset.filename;
+                    file_array = file_array.filter(f => f.name !== fn);
+                    currentReviewResult.bad_files = currentReviewResult.bad_files.filter(b => b.file_name !== fn);
+                    show_files();
+                    display_problematic_files(currentReviewResult);
+                    checkIfAllIssuesResolved();
+                    if (window.TrueTone) window.TrueTone.showToast(`Removed flagged file: ${fn}`, "success");
+                };
+            });
+
             const uploadBtn = document.getElementById('final-upload-btn');
             if (uploadBtn) {
                 uploadBtn.innerHTML = '📤 Submit to Pending Review Queue';
@@ -580,8 +644,8 @@ function publish_tab() {
         if (!previewStrip) return;
 
         const chips = previewStrip.querySelectorAll('.tt-attachment-chip');
-        const badMap = new Map((reviewObj.bad_files || []).map(b => [b.file_name, b]));
-        const goodSet = new Set(reviewObj.good_files || []);
+        const badFiles = reviewObj.bad_files || [];
+        const goodFiles = reviewObj.good_files || [];
 
         chips.forEach(chip => {
             const fileName = chip.dataset.fileName;
@@ -591,8 +655,14 @@ function publish_tab() {
             if (oldBadge) oldBadge.remove();
             chip.classList.remove('tt-file-issue');
 
-            if (badMap.has(fileName)) {
-                const badFile = badMap.get(fileName);
+            // Find matching bad file (exact or normalized)
+            const badFile = badFiles.find(b => {
+                const bName = (b.file_name || '').toLowerCase().trim();
+                const fName = (fileName || '').toLowerCase().trim();
+                return bName === fName || bName.includes(fName) || fName.includes(bName);
+            }) || (badFiles.length === 1 && chips.length === 1 ? badFiles[0] : null);
+
+            if (badFile) {
                 chip.classList.add('tt-file-issue');
 
                 const badge = document.createElement('span');
@@ -607,7 +677,7 @@ function publish_tab() {
                     e.stopPropagation();
                     showFileIssuePopover(chip, badFile);
                 };
-            } else if (goodSet.has(fileName)) {
+            } else if (goodFiles.some(g => (g || '').toLowerCase().trim() === (fileName || '').toLowerCase().trim())) {
                 const badge = document.createElement('span');
                 badge.className = 'tt-file-badge-good';
                 badge.innerHTML = '✓ Verified';
