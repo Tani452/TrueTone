@@ -7,6 +7,34 @@
 const { GoogleGenAI } = require('@google/genai');
 const { loadGuidelinesContext } = require('./guidelines.service');
 
+// Candidate model tiers with automatic fallback
+const CANDIDATE_MODELS = [
+    process.env.GEMINI_MODEL,
+    'gemini-3.1-flash-lite',
+    'gemini-3.5-flash',
+    'gemini-3.8-flash',
+    'gemini-2.5-flash'
+].filter(Boolean);
+
+/**
+ * Executes a Gemini content generation call with automatic fallback across supported model tiers.
+ */
+async function callGeminiWithFallback(ai, requestOptions) {
+    let lastErr = null;
+    for (const model of CANDIDATE_MODELS) {
+        try {
+            return await ai.models.generateContent({
+                ...requestOptions,
+                model,
+            });
+        } catch (err) {
+            console.warn(`[GEMINI-MODEL-FALLBACK] Model '${model}' failed: ${err.message}. Trying next candidate...`);
+            lastErr = err;
+        }
+    }
+    throw lastErr;
+}
+
 // Structured JSON Schema for Review Audit
 const REVIEW_SCHEMA = {
     type: "OBJECT",
@@ -131,8 +159,7 @@ AUDIT RULES:
                 }
             }
 
-            const response = await ai.models.generateContent({
-                model: 'gemini-2.5-flash',
+            const response = await callGeminiWithFallback(ai, {
                 contents,
                 config: {
                     systemInstruction,
@@ -192,8 +219,7 @@ VALIDATION RULES:
                 }
             }
 
-            const response = await ai.models.generateContent({
-                model: 'gemini-2.5-flash',
+            const response = await callGeminiWithFallback(ai, {
                 contents,
                 config: {
                     systemInstruction,
@@ -249,8 +275,7 @@ Output clean, professional, well-formatted Markdown bullet points that can direc
                 }
             }
 
-            const response = await ai.models.generateContent({
-                model: 'gemini-2.5-flash',
+            const response = await callGeminiWithFallback(ai, {
                 contents,
                 config: {
                     systemInstruction,
@@ -519,8 +544,7 @@ ${JSON.stringify(logBundle.history || {}, null, 2)}
     if (apiKey) {
         try {
             const ai = new GoogleGenAI({ apiKey });
-            const response = await ai.models.generateContent({
-                model: 'gemini-2.5-flash',
+            const response = await callGeminiWithFallback(ai, {
                 contents: [{ text: userPrompt }],
                 config: {
                     systemInstruction,
