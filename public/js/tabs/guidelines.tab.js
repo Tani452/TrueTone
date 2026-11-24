@@ -93,10 +93,10 @@ function guidelines_tab() {
         <div class="guidelines-directory-section">
             <div class="section-title-row">
                 <div class="section-title-meta">
-                    <h3>Active Knowledge Base Directory <code class="directory-path-pill">./guidelines</code></h3>
-                    <p>
+                    <h3>Active Knowledge Base Directory</h3>
+                    <!-- <p>
                         Documents currently enforced by Gemini 2.5 Flash during content pre-flight reviews.
-                    </p>
+                    </p> -->
                 </div>
                 <button type="button" class="btn-secondary" id="btn-refresh-guidelines-list">
                     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 4v6h-6"></path><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg>
@@ -113,7 +113,7 @@ function guidelines_tab() {
         </div>
 
         <!-- Baseline Standards Quick Reference Cards -->
-        <div class="placeholder-card">
+        <!-- <div class="placeholder-card">
             <span class="placeholder-badge">BASELINE KNOWLEDGE BASE ARCHITECTURE</span>
             <div class="placeholder-cards-grid">
                 <div class="placeholder-item-card">
@@ -129,7 +129,7 @@ function guidelines_tab() {
                     <p class="placeholder-item-desc">Approved hex swatches (#0A0F1D, #06B6D4), 4.5:1 WCAG contrast ratios, and logo safe zones.</p>
                 </div>
             </div>
-        </div>
+        </div> -->
     `;
 
     workspace.appendChild(container);

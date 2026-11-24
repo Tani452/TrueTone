@@ -126,7 +126,7 @@
                 ${recurring.length > 0 ? `
                     <div class="action-violation-pills">
                         ${recurring.slice(0, 2).map(issue => `
-                            <span class="violation-tag">${escapeHtml(issue)}</span>
+                            <span class="violation-tag" title="${escapeHtml(issue)}">${escapeHtml(issue)}</span>
                         `).join('')}
                         ${recurring.length > 2 ? `<span class="action-violation-more">+${recurring.length - 2} more</span>` : ''}
                     </div>

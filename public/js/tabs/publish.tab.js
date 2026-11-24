@@ -140,7 +140,7 @@ function publish_tab() {
 
         <!-- Live Guideline Reference Footnote & AI Disclosure -->
         <div class="publish-footer-guidelines">
-            <div class="publish-guideline-strip">
+            <!-- <div class="publish-guideline-strip">
                 <div class="publish-guideline-group">
                     <span class="publish-guideline-label">Enforcing:</span>
                     <div class="publish-guideline-chips">
@@ -164,10 +164,10 @@ function publish_tab() {
                             <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
                             <code>audio_and_voice_standards.md</code>
                         </span>
-                    </div>1
+                    </div>
                 </div>
                 <span class="publish-target-engine">Target Engine: <code>POST /api/publish-submission</code></span>
-            </div>
+            </div> -->
             <div class="publish-ai-disclosure">
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                     <circle cx="12" cy="12" r="10"></circle>

@@ -57,7 +57,9 @@
     letter-spacing: normal;
 }
 
-/* Upload Dropdown Trigger */
+/* =============================================================================
+   Upload Dropdown Trigger & Popover Menu (Editorial Light Warm)
+   ============================================================================= */
 .upload-dropdown-container {
     position: relative;
     flex-shrink: 0;
@@ -66,8 +68,10 @@
 #upload-guidelines-btn {
     display: inline-flex;
     align-items: center;
+    justify-content: center;
     gap: 8px;
-    height: 36px;
+    height: 38px;
+    min-height: 38px;
     padding: 0 16px;
     font-size: var(--font-size-base, 14px);
     font-weight: 500;
@@ -79,9 +83,10 @@
     color: #FFFFFF;
     box-shadow: none;
     text-shadow: none;
-    border-radius: 10px;
+    border-radius: var(--radius-sm, 8px);
     cursor: pointer;
-    transition: background-color 0.15s ease, border-color 0.15s ease;
+    user-select: none;
+    transition: background-color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
 #upload-guidelines-btn * {
@@ -91,8 +96,14 @@
 #upload-guidelines-btn:hover {
     background-color: var(--ink-2, #55555E);
     border-color: var(--ink-2, #55555E);
+    color: #FFFFFF;
     transform: none;
     box-shadow: none;
+}
+
+#upload-guidelines-btn:focus-visible {
+    outline: 2px solid var(--azure, #27A9E1);
+    outline-offset: 2px;
 }
 
 #upload-guidelines-btn .upload-btn-icon {
@@ -102,8 +113,21 @@
 
 #upload-guidelines-btn .upload-chevron-icon {
     flex-shrink: 0;
-    color: var(--line, #E4E1D8);
+    color: rgba(255, 255, 255, 0.7);
     margin-left: 2px;
+    transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Active trigger state when dropdown is displayed */
+.upload-dropdown-container:has(#guidelines-upload-dropdown.show) #upload-guidelines-btn,
+#upload-guidelines-btn.active {
+    background-color: var(--ink-2, #55555E);
+    border-color: var(--ink-2, #55555E);
+}
+
+.upload-dropdown-container:has(#guidelines-upload-dropdown.show) #upload-guidelines-btn .upload-chevron-icon,
+#upload-guidelines-btn.active .upload-chevron-icon {
+    transform: rotate(180deg);
 }
 
 /* Elevated Upload Dropdown Menu */
@@ -111,79 +135,95 @@
     position: absolute;
     top: calc(100% + 8px);
     right: 0;
-    width: 340px;
+    width: 360px;
     max-width: calc(100vw - 32px);
     background-color: var(--paper, #FFFFFF);
     border: 1px solid var(--line, #E4E1D8);
     border-radius: var(--radius-md, 12px);
     box-shadow: var(--shadow-overlay);
-    padding: 6px;
+    padding: 8px;
     display: none;
     flex-direction: column;
-    gap: 4px;
+    gap: 6px;
     z-index: 1000;
     box-sizing: border-box;
 }
 
 #guidelines-upload-dropdown.show {
     display: flex;
-    animation: dropdownPop 0.15s ease-out;
+    animation: dropdownPop 0.18s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 @keyframes dropdownPop {
     from {
         opacity: 0;
-        transform: translateY(-4px);
+        transform: translateY(-6px) scale(0.98);
     }
     to {
         opacity: 1;
-        transform: translateY(0);
+        transform: translateY(0) scale(1);
     }
 }
 
+/* Dropdown Option Items (Resetting button primitives) */
 .guidelines-dropdown-option {
-    display: flex;
-    align-items: flex-start;
-    gap: 12px;
-    padding: 10px 12px;
-    background: transparent;
-    border: 1px solid transparent;
-    border-radius: var(--radius-sm, 8px);
-    color: var(--ink, #17171B);
-    cursor: pointer;
-    text-align: left;
-    transition: background-color 0.15s ease;
-    width: 100%;
-    box-sizing: border-box;
+    display: flex !important;
+    align-items: flex-start !important;
+    justify-content: flex-start !important;
+    gap: 12px !important;
+    height: auto !important;
+    min-height: auto !important;
+    width: 100% !important;
+    padding: 12px 14px !important;
+    background-color: transparent !important;
+    border: 1px solid transparent !important;
+    border-radius: var(--radius-sm, 8px) !important;
+    color: var(--ink, #17171B) !important;
+    cursor: pointer !important;
+    text-align: left !important;
+    white-space: normal !important;
+    line-height: normal !important;
+    box-sizing: border-box !important;
+    transition: background-color 0.15s ease, border-color 0.15s ease !important;
 }
 
-.guidelines-dropdown-option:hover {
-    background-color: var(--fill, #F2F0EA);
-    border-color: transparent;
-    transform: none;
+.guidelines-dropdown-option:hover,
+.guidelines-dropdown-option:focus-visible {
+    background-color: var(--fill, #F2F0EA) !important;
+    border-color: var(--line, #E4E1D8) !important;
+    outline: none !important;
+    transform: none !important;
 }
 
 .guidelines-dropdown-icon {
-    width: 32px;
-    height: 32px;
-    border-radius: 6px;
-    background-color: var(--fill, #F2F0EA);
+    width: 38px;
+    height: 38px;
+    border-radius: 8px;
+    background-color: var(--paper-warm, #FAF8F5);
+    border: 1px solid var(--line, #E4E1D8);
     display: flex;
     align-items: center;
     justify-content: center;
-    color: var(--ink, #17171B);
+    color: var(--azure, #27A9E1);
     flex-shrink: 0;
     margin-top: 2px;
+    transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
 }
 
-.guidelines-dropdown-option:hover .guidelines-dropdown-icon {
+.guidelines-dropdown-option:hover .guidelines-dropdown-icon,
+.guidelines-dropdown-option:focus-visible .guidelines-dropdown-icon {
     background-color: var(--paper, #FFFFFF);
-    color: var(--ink, #17171B);
+    border-color: var(--line-strong, #CBC7BC);
+    color: var(--azure, #27A9E1);
 }
 
 .guidelines-dropdown-content {
     flex: 1;
     min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    text-align: left;
 }
 
 .guidelines-dropdown-label {
@@ -193,14 +233,16 @@
     letter-spacing: normal;
     color: var(--ink, #17171B);
     line-height: 1.3;
+    white-space: normal;
 }
 
 .guidelines-dropdown-subtext {
     font-family: var(--font-sans, 'Inter', sans-serif);
     font-size: var(--font-size-sm, 12px);
     color: var(--ink-2, #55555E);
-    margin-top: 3px;
-    line-height: 1.4;
+    line-height: 1.45;
+    white-space: normal;
+    word-break: normal;
 }
 
 /* =============================================================================
