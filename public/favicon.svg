@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <style>
+    @media (prefers-color-scheme: dark) {
+      .tt-badge { fill: #17171B !important; stroke: #3A3A42 !important; }
+      .tt-bars { fill: #27A9E1 !important; }
+    }
+  </style>
+  <rect class="tt-badge" x="1" y="1" width="30" height="30" rx="7" fill="#E3F4FB" stroke="#CBC7BC" stroke-width="1" />
+  <g class="tt-bars" transform="translate(6, 6)" fill="#27A9E1">
+    <rect x="2" y="7" width="2.5" height="6" rx="1.25" />
+    <rect x="6.5" y="3" width="2.5" height="14" rx="1.25" />
+    <rect x="11" y="5.5" width="2.5" height="9" rx="1.25" />
+    <rect x="15.5" y="8" width="2.5" height="4" rx="1.25" />
+  </g>
+</svg>
