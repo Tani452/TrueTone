@@ -24,14 +24,13 @@
     }
 
     /**
-     * Render the status pill badge
+     * Render the status pill badge (low/medium/high mapped to pass/caution/violation)
      */
-    function renderStatusPill(status) {
-        if (status === 'GOOD_PERFORMANCE') {
-            return `<span class="action-status-pill good">✓ Good Performance</span>`;
-        } else {
-            return `<span class="action-status-pill flagged">⚠ Action / Review Needed</span>`;
-        }
+    function renderStatusPill(status, riskCls, riskLabel) {
+        const isGoodPerf = status === 'GOOD_PERFORMANCE' || riskCls === 'risk-low';
+        const pillClass = isGoodPerf ? 'action-status-pill good ' + (riskCls || 'risk-low') : 'action-status-pill flagged ' + (riskCls || 'risk-medium');
+        const text = riskLabel || (isGoodPerf ? 'Low Risk' : 'Medium Risk');
+        return `<span class="${pillClass}">${escapeHtml(text)}</span>`;
     }
 
     /**
@@ -54,30 +53,74 @@
         const card = document.createElement('div');
         card.className = 'action-report-card';
         card.setAttribute('data-action-id', record.id);
+        card.setAttribute('tabindex', '0');
+        card.setAttribute('role', 'button');
+        card.setAttribute('aria-label', `View compliance scorecard for ${record.user_name || 'Staff'}`);
 
         card.innerHTML = `
             <div>
                 <div class="action-card-top">
-                    <div style="display: flex; align-items: center; gap: 12px;">
+                    <div class="action-card-profile-header">
                         <div class="action-card-avatar">${authorInitials}</div>
-                        <div>
-                            <div style="font-weight: 700; font-size: 1rem; color: var(--text-primary);">${escapeHtml(record.user_name)}</div>
-                            <div style="font-size: 0.78rem; color: var(--text-muted);">
-                                ${escapeHtml(record.designation || 'Staff')} ${record.department ? `• ${escapeHtml(record.department)}` : ''}
+                        <div class="action-card-user-info">
+                            <div class="action-card-user-name">${escapeHtml(record.user_name)}</div>
+                            <div class="action-card-user-role">
+                                ${escapeHtml(record.designation || 'Staff')} ${record.department ? `&bull; ${escapeHtml(record.department)}` : ''}
                             </div>
                         </div>
                     </div>
-                    ${renderStatusPill(rep.status)}
+                    ${(() => {
+                        const r = rep.summary && rep.summary.current_risk_level ? String(rep.summary.current_risk_level).toLowerCase() : '';
+                        const isHigh = r === 'high' || r === 'critical' || rep.status === 'CRITICAL_REVIEW';
+                        const isMed = r === 'medium' || r === 'moderate' || rep.status === 'NEEDS_ATTENTION' || stats.flagged_submissions > 0;
+                        const cls = isHigh ? 'risk-high' : (isMed ? 'risk-medium' : 'risk-low');
+                        const label = isHigh ? 'High Risk' : (isMed ? 'Medium Risk' : 'Low Risk');
+                        return renderStatusPill(rep.status, cls, label);
+                    })()}
                 </div>
 
-                <div class="action-card-headline" style="${isGood ? 'color: #34d399; font-weight: 600;' : ''}">
+                <div class="action-card-passrate-section">
+                    <div class="action-card-passrate-header">
+                        <span class="action-passrate-label">First-Time Pass Rate</span>
+                        <span class="action-passrate-number">${(() => {
+                            if (rep.summary && typeof rep.summary.first_time_pass_rate === 'number') {
+                                return Math.round(rep.summary.first_time_pass_rate * 100);
+                            }
+                            const total = stats.total_submissions || (rep.summary && rep.summary.total_submitted) || 0;
+                            const clean = stats.clean_submissions || (rep.summary && rep.summary.approved_count) || 0;
+                            if (total > 0) return Math.min(100, Math.max(0, Math.round((clean / total) * 100)));
+                            return isGood ? 100 : 85;
+                        })()}%</span>
+                    </div>
+                    <div class="action-passrate-track" role="progressbar" aria-valuenow="${(() => {
+                        if (rep.summary && typeof rep.summary.first_time_pass_rate === 'number') {
+                            return Math.round(rep.summary.first_time_pass_rate * 100);
+                        }
+                        const total = stats.total_submissions || (rep.summary && rep.summary.total_submitted) || 0;
+                        const clean = stats.clean_submissions || (rep.summary && rep.summary.approved_count) || 0;
+                        if (total > 0) return Math.min(100, Math.max(0, Math.round((clean / total) * 100)));
+                        return isGood ? 100 : 85;
+                    })()}" aria-valuemin="0" aria-valuemax="100">
+                        <div class="action-passrate-fill" style="width: ${(() => {
+                            if (rep.summary && typeof rep.summary.first_time_pass_rate === 'number') {
+                                return Math.round(rep.summary.first_time_pass_rate * 100);
+                            }
+                            const total = stats.total_submissions || (rep.summary && rep.summary.total_submitted) || 0;
+                            const clean = stats.clean_submissions || (rep.summary && rep.summary.approved_count) || 0;
+                            if (total > 0) return Math.min(100, Math.max(0, Math.round((clean / total) * 100)));
+                            return isGood ? 100 : 85;
+                        })()}%;"></div>
+                    </div>
+                </div>
+
+                <div class="action-card-headline ${isGood ? 'good' : 'flagged'}">
                     ${escapeHtml(rep.summary_headline || 'Performance evaluation completed.')}
                 </div>
 
                 <div class="action-card-metrics">
-                    <span class="action-metric-pill">Total: <strong>${stats.total_submissions || 0}</strong></span>
-                    <span class="action-metric-pill">Flagged: <strong style="${stats.flagged_submissions > 0 ? 'color: #f87171;' : ''}">${stats.flagged_submissions || 0}</strong></span>
-                    <span class="action-metric-pill">Clean: <strong style="color: #34d399;">${stats.clean_submissions || 0}</strong></span>
+                    <span class="action-metric-pill">Total: <strong>${stats.total_submissions || (rep.summary && rep.summary.total_submitted) || 0}</strong></span>
+                    <span class="action-metric-pill flagged">Flagged: <strong class="flagged-count">${stats.flagged_submissions || 0}</strong></span>
+                    <span class="action-metric-pill clean">Clean: <strong class="clean-count">${stats.clean_submissions || (rep.summary && rep.summary.approved_count) || 0}</strong></span>
                 </div>
 
                 ${recurring.length > 0 ? `
@@ -85,19 +128,48 @@
                         ${recurring.slice(0, 2).map(issue => `
                             <span class="violation-tag">${escapeHtml(issue)}</span>
                         `).join('')}
-                        ${recurring.length > 2 ? `<span style="font-size: 0.72rem; color: var(--text-muted); align-self: center;">+${recurring.length - 2} more</span>` : ''}
+                        ${recurring.length > 2 ? `<span class="action-violation-more">+${recurring.length - 2} more</span>` : ''}
                     </div>
                 ` : ''}
+
+                <div class="action-card-intervention-row">
+                    <span class="action-intervention-label">Last Intervention:</span>
+                    <span class="action-intervention-text">${escapeHtml((() => {
+                        if (Array.isArray(rep.historical_activity) && rep.historical_activity.length > 0) {
+                            const item = rep.historical_activity[rep.historical_activity.length - 1];
+                            return (item.date ? item.date + ': ' : '') + item.action;
+                        }
+                        if (Array.isArray(rep.manager_comments) && rep.manager_comments.length > 0) {
+                            return 'Manager Note: ' + rep.manager_comments[rep.manager_comments.length - 1].text;
+                        }
+                        if (Array.isArray(rep.recommended_actions) && rep.recommended_actions.length > 0) {
+                            return rep.recommended_actions[0];
+                        }
+                        if (rep.action_recommendation) {
+                            return rep.action_recommendation;
+                        }
+                        return rep.summary_headline || 'Standard workflow active; no corrective interventions needed.';
+                    })())}</span>
+                </div>
             </div>
 
             <div class="action-card-footer">
-                <span>💬 ${comments.length} manager note${comments.length === 1 ? '' : 's'}</span>
-                <span style="color: var(--accent-cyan); font-weight: 600;">View Full Report &amp; Comment &rarr;</span>
+                <span class="action-footer-notes">
+                    <svg class="action-footer-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                    <span>${comments.length} manager note${comments.length === 1 ? '' : 's'}</span>
+                </span>
+                <span class="action-footer-link">View Full Report &rarr;</span>
             </div>
         `;
 
         card.onclick = () => {
             window.open_action_detail(record.id);
+        };
+        card.onkeydown = (e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                window.open_action_detail(record.id);
+            }
         };
 
         return card;
@@ -116,32 +188,37 @@
                 <!-- Dashboard Header -->
                 <div class="actions-header-bar">
                     <div>
-                        <h2>🛡️ Governance Actions &amp; Employee Compliance Reports</h2>
-                        <p style="color: var(--text-secondary); font-size: 0.88rem; margin-top: 4px;">
+                        <h2>Governance Actions &amp; Employee Compliance Reports</h2>
+                        <p class="actions-header-subtitle">
                             Weekly AI synthesis of content logs, recurring brand violations, and employee performance.
                         </p>
                     </div>
                     <button class="actions-sync-btn" id="run-weekly-analysis-btn">
-                        <span>🔄</span>
-                        <span>Sync Weekly Logs (Run AI Analysis)</span>
+                        <svg class="actions-sync-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
+                            <path d="M3 3v5h5"/>
+                            <path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/>
+                            <path d="M21 21v-5h-5"/>
+                        </svg>
+                        <span>Run Weekly AI Analysis</span>
                     </button>
                 </div>
 
                 <!-- Filter Bar -->
-                <div class="actions-header-bar" style="margin-bottom: 24px;">
-                    <div class="actions-filter-group">
-                        <button class="actions-filter-btn ${currentActionFilter === 'all' ? 'active' : ''}" data-filter="all">All Employees</button>
-                        <button class="actions-filter-btn ${currentActionFilter === 'flagged' ? 'active' : ''}" data-filter="flagged">Flagged / Needs Attention</button>
-                        <button class="actions-filter-btn ${currentActionFilter === 'good' ? 'active' : ''}" data-filter="good">Good Performance</button>
+                <div class="actions-filter-bar">
+                    <div class="actions-filter-group" role="tablist" aria-label="Employee filters">
+                        <button class="actions-filter-btn ${currentActionFilter === 'all' ? 'active' : ''}" data-filter="all" role="tab" aria-selected="${currentActionFilter === 'all'}">All Employees</button>
+                        <button class="actions-filter-btn ${currentActionFilter === 'flagged' ? 'active' : ''}" data-filter="flagged" role="tab" aria-selected="${currentActionFilter === 'flagged'}">Flagged / Needs Attention</button>
+                        <button class="actions-filter-btn ${currentActionFilter === 'good' ? 'active' : ''}" data-filter="good" role="tab" aria-selected="${currentActionFilter === 'good'}">Good Performance</button>
                     </div>
-                    <div style="font-size: 0.82rem; color: var(--text-muted);" id="actions-count-display">
+                    <div class="actions-count-display" id="actions-count-display">
                         Loading employee reports...
                     </div>
                 </div>
 
                 <!-- Cards Grid -->
                 <div class="actions-cards-grid" id="actions-cards-grid">
-                    <div style="text-align: center; padding: 48px; color: var(--text-muted); grid-column: 1 / -1;">
+                    <div class="actions-grid-loading">
                         Querying cumulative employee scorecards from PostgreSQL...
                     </div>
                 </div>
@@ -186,7 +263,7 @@
             const grid = document.getElementById('actions-cards-grid');
             if (grid) {
                 grid.innerHTML = `
-                    <div style="color: var(--accent-rose); padding: 24px; text-align: center; grid-column: 1 / -1;">
+                    <div class="actions-error-notice">
                         Error loading employee compliance reports: ${escapeHtml(err.message)}
                     </div>
                 `;
@@ -223,10 +300,12 @@
 
         if (filtered.length === 0) {
             grid.innerHTML = `
-                <div style="background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 48px; text-align: center; color: var(--text-muted); grid-column: 1 / -1;">
-                    <div style="font-size: 2.2rem; margin-bottom: 12px;">🛡️</div>
-                    <h3 style="color: var(--text-primary); margin-bottom: 6px;">No Records Found</h3>
-                    <p style="font-size: 0.88rem;">No employee scorecards match current filter "${currentActionFilter}".</p>
+                <div class="actions-empty-state">
+                    <div class="actions-empty-icon">
+                        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg>
+                    </div>
+                    <h3 class="actions-empty-title">No Records Found</h3>
+                    <p class="actions-empty-desc">No employee scorecards match current filter "${escapeHtml(currentActionFilter)}".</p>
                 </div>
             `;
             return;
@@ -245,7 +324,7 @@
         const btn = document.getElementById('run-weekly-analysis-btn');
         if (btn) {
             btn.disabled = true;
-            btn.innerHTML = `<span>🔄</span><span>Synthesizing Weekly Logs...</span>`;
+            btn.innerHTML = `<svg class="actions-sync-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M21 21v-5h-5"/></svg><span>Synthesizing Weekly Logs...</span>`;
         }
 
         try {
@@ -270,7 +349,7 @@
         } finally {
             if (btn) {
                 btn.disabled = false;
-                btn.innerHTML = `<span>🔄</span><span>Sync Weekly Logs (Run AI Analysis)</span>`;
+                btn.innerHTML = `<svg class="actions-sync-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M21 21v-5h-5"/></svg><span>Run Weekly AI Analysis</span>`;
             }
         }
     }
@@ -285,7 +364,7 @@
 
         workspace.innerHTML = `
             <div class="tab-viewport">
-                <div style="padding: 48px; text-align: center; color: var(--text-muted);">
+                <div class="actions-grid-loading">
                     Loading detailed employee governance scorecard...
                 </div>
             </div>
@@ -301,7 +380,7 @@
             workspace.innerHTML = `
                 <div class="tab-viewport">
                     <button class="btn-back-queue" onclick="window.action_tab()">&larr; Back to All Reports</button>
-                    <div style="color: var(--accent-rose); margin-top: 24px;">Failed to load detail report: ${escapeHtml(err.message)}</div>
+                    <div class="actions-error-notice action-detail-error">Failed to load detail report: ${escapeHtml(err.message)}</div>
                 </div>
             `;
         }
@@ -336,7 +415,7 @@
 
         container.innerHTML = `
             <!-- Top Back Bar -->
-            <div>
+            <div class="action-detail-topbar">
                 <button class="btn-back-queue" id="btn-back-to-actions">
                     &larr; Back to All Reports
                 </button>
@@ -344,112 +423,210 @@
 
             <!-- Employee Profile Banner -->
             <div class="action-detail-profile-banner">
-                <div style="display: flex; align-items: center; gap: 16px;">
-                    <div class="action-card-avatar" style="width: 52px; height: 52px; font-size: 1.25rem;">
+                <div class="action-banner-left">
+                    <div class="action-card-avatar action-banner-avatar">
                         ${authorInitials}
                     </div>
-                    <div>
-                        <div style="font-size: 1.35rem; font-weight: 700; color: var(--text-primary);">${escapeHtml(record.user_name)}</div>
-                        <div style="font-size: 0.85rem; color: var(--text-muted); margin-top: 2px;">
-                            ${escapeHtml(record.designation || 'Staff')} • Department: <strong>${escapeHtml(record.department || 'Content & Marketing')}</strong>
+                    <div class="action-banner-identity">
+                        <div class="action-banner-name">${escapeHtml(record.user_name)}</div>
+                        <div class="action-banner-meta">
+                            ${escapeHtml(record.designation || 'Staff')} &bull; Department: <strong>${escapeHtml(record.department || 'Content & Marketing')}</strong>
                         </div>
                     </div>
                 </div>
-                <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
-                    <div class="action-metric-pill" style="padding: 6px 12px; font-size: 0.8rem;">
-                        Total: <strong>${stats.total_submissions || 0}</strong> | Flagged: <strong style="${stats.flagged_submissions > 0 ? 'color: #f87171;' : ''}">${stats.flagged_submissions || 0}</strong> | Clean: <strong style="color: #34d399;">${stats.clean_submissions || 0}</strong>
+                <div class="action-banner-right">
+                    <div class="action-metric-pill action-banner-metric-pill">
+                        Total: <strong>${stats.total_submissions || (rep.summary && rep.summary.total_submitted) || 0}</strong> &bull;
+                        Flagged: <strong class="flagged-count">${stats.flagged_submissions || 0}</strong> &bull;
+                        Clean: <strong class="clean-count">${stats.clean_submissions || (rep.summary && rep.summary.approved_count) || 0}</strong>
                     </div>
-                    ${renderStatusPill(rep.status)}
+                    ${(() => {
+                        const r = rep.summary && rep.summary.current_risk_level ? String(rep.summary.current_risk_level).toLowerCase() : '';
+                        const isHigh = r === 'high' || r === 'critical' || rep.status === 'CRITICAL_REVIEW';
+                        const isMed = r === 'medium' || r === 'moderate' || rep.status === 'NEEDS_ATTENTION' || stats.flagged_submissions > 0;
+                        const cls = isHigh ? 'risk-high' : (isMed ? 'risk-medium' : 'risk-low');
+                        const label = isHigh ? 'High Risk' : (isMed ? 'Medium Risk' : 'Low Risk');
+                        return renderStatusPill(rep.status, cls, label);
+                    })()}
                 </div>
             </div>
 
             <!-- Executive Summary & Detailed AI Analysis Card -->
             <div class="action-section-card">
                 <div class="action-section-title">
-                    <span>🧠 Executive Summary &amp; Detailed AI Analysis</span>
+                    <svg class="action-section-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2a8 8 0 0 0-8 8c0 3.3 2 6 5 7.4V20a1 1 0 0 0 1 1h4a1 1 0 0 0 1-1v-2.6c3-1.4 5-4.1 5-7.4a8 8 0 0 0-8-8z"/><path d="M9 22h6"/></svg>
+                    <span>Executive Summary &amp; Detailed AI Analysis</span>
                 </div>
-                <div style="font-size: 1.05rem; font-weight: 600; margin-bottom: 12px; ${isGood ? 'color: #34d399;' : 'color: #fda4af;'}">
+                <div class="action-analysis-headline ${isGood ? 'good' : 'flagged'}">
                     ${escapeHtml(rep.summary_headline || 'Performance Assessment')}
                 </div>
-                <div style="font-size: 0.92rem; color: #cbd5e1; line-height: 1.7; background: #090d16; border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); padding: 18px; white-space: pre-wrap;">
+                <div class="action-analysis-body">
                     ${escapeHtml(rep.detailed_analysis || 'No detailed analysis text available.')}
                 </div>
             </div>
 
-            <!-- Recurring Guideline Violations List (when present) -->
-            ${recurring.length > 0 ? `
-                <div class="action-section-card">
-                    <div class="action-section-title">
-                        <span>⚠️ Recurring Brand Guideline Violations</span>
-                    </div>
-                    <p style="font-size: 0.82rem; color: var(--text-muted); margin-bottom: 14px;">
-                        Frequent patterns identified during automated log audits.
-                    </p>
-                    <div style="display: flex; flex-direction: column; gap: 8px;">
-                        ${recurring.map(issue => `
-                            <div style="background: rgba(239, 68, 68, 0.08); border-left: 3px solid #ef4444; border-radius: 4px; padding: 10px 14px; font-size: 0.88rem; color: #fecdd3;">
-                                <strong>Violation:</strong> ${escapeHtml(issue)}
-                            </div>
-                        `).join('')}
-                    </div>
-                </div>
-            ` : ''}
-
-            <!-- Recommended Corrective / Coaching Actions -->
+            <!-- Violation Categories as Flat Horizontal Bars in Azure Scale -->
             <div class="action-section-card">
                 <div class="action-section-title">
-                    <span>📋 Recommended Corrective &amp; Coaching Actions</span>
+                    <svg class="action-section-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 20V10"/><path d="M12 20V4"/><path d="M6 20v-6"/></svg>
+                    <span>Violation Categories &amp; Frequency</span>
                 </div>
-                <p style="font-size: 0.82rem; color: var(--text-muted); margin-bottom: 14px;">
-                    Actionable next steps for leadership and the creator.
+                <p class="action-section-subtitle">
+                    Distribution of recurring brand guidelines and compliance deviations across past content cycles.
                 </p>
-                <div style="display: flex; flex-direction: column; gap: 8px;">
-                    ${actionsList.map((actionItem, idx) => `
-                        <div style="display: flex; align-items: flex-start; gap: 10px; background: #090d16; border: 1px solid var(--border-subtle); border-radius: 4px; padding: 10px 14px; font-size: 0.88rem; color: #e2e8f0;">
-                            <span style="color: var(--accent-cyan); font-weight: 700;">#${idx + 1}</span>
-                            <span>${escapeHtml(actionItem)}</span>
+                ${(() => {
+                    let catEntries = [];
+                    if (rep.error_trends && typeof rep.error_trends === 'object' && Object.keys(rep.error_trends).length > 0) {
+                        catEntries = Object.entries(rep.error_trends).map(([name, count]) => ({
+                            name: name.replace(/_/g, ' '),
+                            count: Number(count) || 1
+                        }));
+                    } else if (Array.isArray(logs) && logs.length > 0) {
+                        const counts = {};
+                        logs.forEach(l => {
+                            if (l.issue) {
+                                const iss = l.issue;
+                                const name = (iss.error_type || iss.category || (Array.isArray(iss.text) && iss.text[0] ? iss.text[0].problem : '') || (iss.violation_details && iss.violation_details.guideline_reference) || 'Brand Guideline Deviation').replace(/_/g, ' ');
+                                counts[name] = (counts[name] || 0) + 1;
+                            }
+                        });
+                        if (Object.keys(counts).length > 0) {
+                            catEntries = Object.entries(counts).map(([name, count]) => ({ name, count }));
+                        }
+                    } else if (recurring.length > 0) {
+                        catEntries = recurring.map((issue, idx) => ({
+                            name: issue,
+                            count: Math.max(1, recurring.length - idx)
+                        }));
+                    }
+
+                    if (catEntries.length === 0) {
+                        return `
+                            <div class="action-clean-slate">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                                <span>Zero guideline violations recorded across recent audit cycles.</span>
+                            </div>
+                        `;
+                    }
+
+                    const maxCount = Math.max(...catEntries.map(c => c.count), 1);
+                    return `
+                        <div class="action-chart-container">
+                            ${catEntries.map((cat, idx) => `
+                                <div class="action-chart-row">
+                                    <div class="action-chart-label-col">
+                                        <span class="action-chart-category-name">${escapeHtml(cat.name)}</span>
+                                        <span class="action-chart-category-count">${cat.count} occurrence${cat.count === 1 ? '' : 's'}</span>
+                                    </div>
+                                    <div class="action-chart-bar-col">
+                                        <div class="action-chart-bar-track">
+                                            <div class="action-chart-bar-fill shade-${idx % 5}" style="width: ${Math.round((cat.count / maxCount) * 100)}%;"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            `).join('')}
                         </div>
-                    `).join('')}
+                    `;
+                })()}
+            </div>
+
+            <!-- Intervention & Coaching Timeline (Vertical Hairline with Dots) -->
+            <div class="action-section-card">
+                <div class="action-section-title">
+                    <svg class="action-section-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                    <span>Intervention &amp; Coaching Timeline</span>
+                </div>
+                <p class="action-section-subtitle">
+                    Chronological governance record and prescribed corrective coaching milestones.
+                </p>
+                <div class="action-timeline">
+                    ${(() => {
+                        const events = [];
+                        if (Array.isArray(rep.historical_activity) && rep.historical_activity.length > 0) {
+                            rep.historical_activity.forEach(act => {
+                                events.push({
+                                    date: act.date || 'Past Milestone',
+                                    title: act.action,
+                                    status: act.status || 'LOGGED',
+                                    type: 'history'
+                                });
+                            });
+                        }
+                        if (actionsList.length > 0) {
+                            actionsList.forEach((actionItem, idx) => {
+                                events.push({
+                                    date: 'Coaching Plan',
+                                    title: actionItem,
+                                    status: 'STEP #' + (idx + 1),
+                                    type: 'recommendation'
+                                });
+                            });
+                        }
+                        if (events.length === 0 && rep.action_recommendation) {
+                            events.push({
+                                date: 'Standing Status',
+                                title: rep.action_recommendation,
+                                status: 'ACTIVE',
+                                type: 'recommendation'
+                            });
+                        }
+                        if (events.length === 0) {
+                            return `<div class="action-empty-timeline">No intervention records or corrective milestones logged for this creator.</div>`;
+                        }
+                        return events.map(ev => `
+                            <div class="action-timeline-item">
+                                <div class="action-timeline-dot ${ev.type}"></div>
+                                <div class="action-timeline-content">
+                                    <div class="action-timeline-header">
+                                        <span class="action-timeline-date">${escapeHtml(ev.date)}</span>
+                                        <span class="action-timeline-badge ${escapeHtml(ev.status.toLowerCase().replace(/[^a-z0-9]/g, '-'))}">${escapeHtml(ev.status)}</span>
+                                    </div>
+                                    <div class="action-timeline-body">${escapeHtml(ev.title)}</div>
+                                </div>
+                            </div>
+                        `).join('');
+                    })()}
                 </div>
             </div>
 
-            <!-- Recent Flagged Log Snippets (Audit Evidence) -->
+            <!-- Recent Content Logs (Audit Evidence) -->
             <div class="action-section-card">
                 <div class="action-section-title">
-                    <span>🔍 Audit Evidence: Recent Content Logs (${logs.length})</span>
+                    <svg class="action-section-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                    <span>Audit Evidence: Recent Content Logs (${logs.length})</span>
                 </div>
-                <p style="font-size: 0.82rem; color: var(--text-muted); margin-bottom: 14px;">
+                <p class="action-section-subtitle">
                     Recent log entries from the <code>logs</code> table evaluated in this cumulative report.
                 </p>
 
                 ${logs.length === 0 ? `
-                    <div style="color: var(--text-muted); font-size: 0.85rem; padding: 12px 0;">No past log entries recorded for this creator.</div>
+                    <div class="action-empty-logs">No past log entries recorded for this creator.</div>
                 ` : `
-                    <div style="display: flex; flex-direction: column; gap: 10px;">
+                    <div class="action-logs-list">
                         ${logs.map(log => {
                             const post = log.post || {};
                             const iss = log.issue;
                             const isFlagged = Boolean(iss && (typeof iss === 'object' ? Object.keys(iss).length > 0 : iss));
                             const textSnippet = post.text || post.headline || post.caption || (post.files && post.files.length ? '[File Attachment]' : 'Post content');
+                            const errorDesc = iss ? (iss.error_type || iss.category || (Array.isArray(iss.text) && iss.text[0] ? iss.text[0].problem : '') || (iss.violation_details && iss.violation_details.guideline_reference ? iss.violation_details.guideline_reference : 'Flagged Brand Guideline Issue')) : '';
 
                             return `
-                                <div class="audit-evidence-item">
-                                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-                                        <div style="display: flex; align-items: center; gap: 8px;">
-                                            <span style="font-size: 0.76rem; font-weight: 700; color: ${isFlagged ? '#f87171' : '#34d399'};">
-                                                ${isFlagged ? '⚠️ VIOLATION LOGGED' : '✓ CLEAN POST'}
+                                <div class="audit-evidence-item ${isFlagged ? 'flagged' : 'clean'}">
+                                    <div class="audit-evidence-header">
+                                        <div class="audit-evidence-tags">
+                                            <span class="tag-badge ${isFlagged ? 'violation' : 'pass'}">
+                                                ${isFlagged ? 'Violation Logged' : 'Clean Post'}
                                             </span>
-                                            <span style="font-size: 0.74rem; color: var(--text-muted);">
-                                                Log #${log.id} • ${new Date(log.timestamp).toLocaleString()}
-                                            </span>
+                                            <span class="audit-evidence-logid">Log #${log.id}</span>
                                         </div>
+                                        <span class="audit-evidence-timestamp">${new Date(log.timestamp).toLocaleString()}</span>
                                     </div>
-                                    <div style="font-size: 0.86rem; color: #cbd5e1; margin-bottom: 6px;">
+                                    <div class="audit-evidence-snippet">
                                         ${escapeHtml(textSnippet)}
                                     </div>
                                     ${isFlagged ? `
-                                        <div style="background: rgba(220, 38, 38, 0.12); border-left: 2px solid #dc2626; padding: 6px 10px; border-radius: 2px; font-size: 0.78rem; color: #fca5a5;">
-                                            ${escapeHtml(iss.error_type || iss.category || (Array.isArray(iss.text) && iss.text[0] ? iss.text[0].problem : '') || (iss.violation_details && iss.violation_details.guideline_reference ? iss.violation_details.guideline_reference : 'Flagged Brand Guideline Issue'))}
+                                        <div class="audit-evidence-violation">
+                                            <strong>Violation:</strong> ${escapeHtml(errorDesc)}
                                         </div>
                                     ` : ''}
                                 </div>
@@ -462,28 +639,34 @@
             <!-- Role-Gated Manager Review & Comments Section -->
             <div class="action-section-card" id="action-comments-section">
                 <div class="action-section-title">
-                    <span>💬 Official Manager Review &amp; Follow-Up Notes</span>
-                    <span style="font-size: 0.76rem; background: var(--bg-surface-elevated); color: var(--text-secondary); padding: 2px 8px; border-radius: 12px;">
+                    <svg class="action-section-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                    <span>Official Manager Review &amp; Follow-Up Notes</span>
+                    <span class="comment-count-pill">
                         ${comments.length}
                     </span>
                 </div>
 
                 <!-- Existing Comments Feed -->
-                <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 14px;">
+                <div class="action-comments-list">
                     ${comments.length === 0 ? `
-                        <div style="color: var(--text-muted); font-size: 0.85rem; padding: 8px 0;" id="empty-comments-notice">
+                        <div class="action-empty-comments" id="empty-comments-notice">
                             No managerial review notes logged yet.
                         </div>
                     ` : comments.map(c => `
                         <div class="manager-comment-item">
-                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-                                <div style="display: flex; align-items: center; gap: 8px;">
-                                    <strong style="font-size: 0.86rem; color: var(--text-primary);">${escapeHtml(c.user_name || 'Manager')}</strong>
-                                    <span style="font-size: 0.74rem; color: var(--text-muted);">${escapeHtml(c.designation || 'Reviewer')}</span>
+                            <div class="comment-header">
+                                <div class="comment-author-badge">
+                                    <div class="comment-avatar">
+                                        ${escapeHtml((c.user_name || 'M').charAt(0).toUpperCase())}
+                                    </div>
+                                    <div class="comment-author-text">
+                                        <span class="comment-author-name">${escapeHtml(c.user_name || 'Manager')}</span>
+                                        <span class="comment-author-designation">${escapeHtml(c.designation || 'Reviewer')}</span>
+                                    </div>
                                 </div>
-                                <span style="font-size: 0.72rem; color: var(--text-muted);">${new Date(c.timestamp).toLocaleString()}</span>
+                                <span class="comment-timestamp">${new Date(c.timestamp).toLocaleString()}</span>
                             </div>
-                            <div style="font-size: 0.88rem; color: #cbd5e1; line-height: 1.5; white-space: pre-wrap;">
+                            <div class="comment-body">
                                 ${escapeHtml(c.text)}
                             </div>
                         </div>
@@ -491,20 +674,20 @@
                 </div>
 
                 <!-- Role-Gated Input -->
-                <div style="margin-top: 24px; padding-top: 18px; border-top: 1px solid var(--border-subtle);">
+                <div class="top-comment-composer">
                     ${canApprove ? `
-                        <div style="font-size: 0.86rem; font-weight: 600; color: var(--text-primary); margin-bottom: 8px;">
+                        <div class="composer-title">
                             Post an Official Governance Review Note:
                         </div>
-                        <textarea id="action-comment-input" class="form-textarea" rows="3" placeholder="Write an official governance review, coaching note, or follow-up action..." style="background: #090d16;"></textarea>
-                        <div style="display: flex; justify-content: flex-end; margin-top: 10px;">
-                            <button class="btn-primary" id="btn-submit-action-comment" style="font-size: 0.84rem; padding: 8px 18px;">
+                        <textarea id="action-comment-input" class="form-textarea" rows="3" placeholder="Write an official governance review, coaching note, or follow-up action..."></textarea>
+                        <div class="composer-submit-row">
+                            <button class="btn-primary" id="btn-submit-action-comment">
                                 Post Review Note
                             </button>
                         </div>
                     ` : `
-                        <div style="background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.25); border-radius: var(--radius-sm); padding: 12px 16px; font-size: 0.84rem; color: #fbbf24;">
-                            🔒 <strong>READ-ONLY:</strong> Only authorized approvers (<code>can_approve = 'Y'</code>) can post review notes on employee governance reports.
+                        <div class="readonly-explanatory-note">
+                            <strong>READ-ONLY:</strong> Only authorized approvers (<code>can_approve = 'Y'</code>) can post review notes on employee governance reports.
                         </div>
                     `}
                 </div>
@@ -584,11 +767,14 @@
         // Guard: Prevent rendering if user does not possess action privileges
         if (currentUser.can_take_action !== 'Y') {
             workspace.innerHTML = `
-                <div class="banner-notice read-only" style="margin-top: 40px;">
-                    <span style="font-size: 1.5rem;">🚫</span>
+                <div class="banner-notice read-only action-access-denied">
+                    <svg class="banner-status-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <circle cx="12" cy="12" r="10"/>
+                        <line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/>
+                    </svg>
                     <div>
                         <strong>ACCESS DENIED:</strong>
-                        <p style="margin-top: 4px;">You do not possess compliance authority (<code>can_take_action = 'N'</code>). This tab requires administrative action credentials.</p>
+                        <p class="banner-status-msg">You do not possess compliance authority (<code>can_take_action = 'N'</code>). This tab requires administrative action credentials.</p>
                     </div>
                 </div>
             `;

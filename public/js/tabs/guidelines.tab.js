@@ -39,22 +39,27 @@ function guidelines_tab() {
             <!-- Upload Dropdown Trigger -->
             <div class="upload-dropdown-container">
                 <button type="button" class="btn-primary" id="upload-guidelines-btn">
-                    <span>📤 Upload Files</span>
-                    <span style="font-size: 0.75rem;">▼</span>
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="upload-btn-icon"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                    <span>Upload Files</span>
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="upload-chevron-icon"><polyline points="6 9 12 15 18 9"></polyline></svg>
                 </button>
 
                 <!-- Sleek Upload Dropdown Menu -->
                 <div id="guidelines-upload-dropdown">
                     <button type="button" class="guidelines-dropdown-option" id="opt-upload-guidelines">
-                        <span class="guidelines-dropdown-icon">📜</span>
-                        <div>
-                            <div class="guidelines-dropdown-label">Guidelines</div>
+                        <div class="guidelines-dropdown-icon">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                        </div>
+                        <div class="guidelines-dropdown-content">
+                            <div class="guidelines-dropdown-label">Official Guidelines</div>
                             <div class="guidelines-dropdown-subtext">Upload official brand rules, style guides, or approved fact sheets</div>
                         </div>
                     </button>
                     <button type="button" class="guidelines-dropdown-option" id="opt-upload-past-publishes">
-                        <span class="guidelines-dropdown-icon">📊</span>
-                        <div>
+                        <div class="guidelines-dropdown-icon">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"></path></svg>
+                        </div>
+                        <div class="guidelines-dropdown-content">
                             <div class="guidelines-dropdown-label">Past Publishes</div>
                             <div class="guidelines-dropdown-subtext">Extract brand tone, terminology, and data patterns from historical posts</div>
                         </div>
@@ -70,10 +75,10 @@ function guidelines_tab() {
         <div id="incompatible-warning-box">
             <div class="warning-box-header">
                 <div class="warning-box-title">
-                    <span>⚠️</span>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="warning-box-icon"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
                     <span>Warning: Incompatible Files Detected</span>
                 </div>
-                <button type="button" class="btn-close" id="btn-close-warning" style="font-size: 1.1rem; line-height: 1;">&times;</button>
+                <button type="button" class="btn-close" id="btn-close-warning" aria-label="Close warning">&times;</button>
             </div>
             <div class="warning-box-body" id="warning-box-message">
                 Specific explanation from TrueTone AI Auditor.
@@ -87,40 +92,41 @@ function guidelines_tab() {
         <!-- Active Guidelines Directory Section -->
         <div class="guidelines-directory-section">
             <div class="section-title-row">
-                <div>
-                    <h3>Active Knowledge Base Directory (<code>./guidelines</code>)</h3>
-                    <p style="font-size: 0.78rem; color: var(--text-muted); margin-top: 2px;">
+                <div class="section-title-meta">
+                    <h3>Active Knowledge Base Directory <code class="directory-path-pill">./guidelines</code></h3>
+                    <p>
                         Documents currently enforced by Gemini 2.5 Flash during content pre-flight reviews.
                     </p>
                 </div>
                 <button type="button" class="btn-secondary" id="btn-refresh-guidelines-list">
-                    ↻ Refresh Directory
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 4v6h-6"></path><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg>
+                    <span>Refresh Directory</span>
                 </button>
             </div>
 
             <!-- Active Guidelines Cards Grid -->
             <div id="active-guidelines-list" class="guidelines-cards-grid">
-                <div style="color: var(--text-muted); padding: 30px; text-align: center; grid-column: 1 / -1;">
+                <div class="guidelines-loading-state">
                     Loading guidelines directory from server...
                 </div>
             </div>
         </div>
 
         <!-- Baseline Standards Quick Reference Cards -->
-        <div class="placeholder-card" style="margin-top: 30px;">
+        <div class="placeholder-card">
             <span class="placeholder-badge">BASELINE KNOWLEDGE BASE ARCHITECTURE</span>
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px; margin-top: 10px;">
-                <div style="background: var(--bg-surface-elevated); padding: 14px; border-radius: 6px; border: 1px solid var(--border-strong);">
-                    <strong style="color: #60a5fa; font-size: 0.85rem;">1. brand_voice_and_tone.md</strong>
-                    <p style="font-size: 0.78rem; color: var(--text-secondary); margin-top: 4px;">Enforces probabilistic voice, anti-clickbait mandates, TrueTone CamelCase, and inclusive language.</p>
+            <div class="placeholder-cards-grid">
+                <div class="placeholder-item-card">
+                    <strong class="placeholder-item-title">1. brand_voice_and_tone.md</strong>
+                    <p class="placeholder-item-desc">Enforces probabilistic voice, anti-clickbait mandates, TrueTone CamelCase, and inclusive language.</p>
                 </div>
-                <div style="background: var(--bg-surface-elevated); padding: 14px; border-radius: 6px; border: 1px solid var(--border-strong);">
-                    <strong style="color: #60a5fa; font-size: 0.85rem;">2. approved_facts_and_claims.txt</strong>
-                    <p style="font-size: 0.78rem; color: var(--text-secondary); margin-top: 4px;">Verified benchmarks (sub-10ms, 99.9% consistency) and mandatory Section 27A SEC Safe Harbor disclaimers.</p>
+                <div class="placeholder-item-card">
+                    <strong class="placeholder-item-title">2. approved_facts_and_claims.txt</strong>
+                    <p class="placeholder-item-desc">Verified benchmarks (sub-10ms, 99.9% consistency) and mandatory Section 27A SEC Safe Harbor disclaimers.</p>
                 </div>
-                <div style="background: var(--bg-surface-elevated); padding: 14px; border-radius: 6px; border: 1px solid var(--border-strong);">
-                    <strong style="color: #60a5fa; font-size: 0.85rem;">3. visual_and_accessibility_standards.md</strong>
-                    <p style="font-size: 0.78rem; color: var(--text-secondary); margin-top: 4px;">Approved hex swatches (#0A0F1D, #06B6D4), 4.5:1 WCAG contrast ratios, and logo safe zones.</p>
+                <div class="placeholder-item-card">
+                    <strong class="placeholder-item-title">3. visual_and_accessibility_standards.md</strong>
+                    <p class="placeholder-item-desc">Approved hex swatches (#0A0F1D, #06B6D4), 4.5:1 WCAG contrast ratios, and logo safe zones.</p>
                 </div>
             </div>
         </div>
@@ -135,20 +141,20 @@ function guidelines_tab() {
     confirmModal.innerHTML = `
         <div class="modal-box" style="max-width: 560px;">
             <div class="modal-header">
-                <h3 style="color: #f8fafc; font-size: 1.15rem; display: flex; align-items: center; gap: 8px;">
-                    <span>🛡️</span>
+                <h3 class="modal-header-title">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="modal-title-icon"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
                     <span>Confirm Guideline Upload</span>
                 </h3>
-                <button type="button" class="btn-close" id="modal-cancel-x-btn">&times;</button>
+                <button type="button" class="btn-close" id="modal-cancel-x-btn" aria-label="Close modal">&times;</button>
             </div>
-            <div id="guideline-confirm-body" style="font-size: 0.88rem; color: #cbd5e1; line-height: 1.55;">
+            <div id="guideline-confirm-body" class="guideline-confirm-body-text">
                 <!-- Populated dynamically upon AI validation -->
             </div>
-            <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 22px; border-top: 1px solid var(--border-strong); padding-top: 14px;">
-                <button type="button" class="btn-secondary" id="modal-btn-cancel-upload" style="padding: 8px 16px;">
+            <div class="modal-footer-actions">
+                <button type="button" class="btn-secondary" id="modal-btn-cancel-upload">
                     ✕ Cancel Upload
                 </button>
-                <button type="button" class="btn-primary" id="modal-btn-confirm-save" style="padding: 8px 18px; background: linear-gradient(135deg, #10b981, #059669);">
+                <button type="button" class="btn-primary" id="modal-btn-confirm-save">
                     ✓ Confirm & Activate
                 </button>
             </div>
@@ -163,11 +169,11 @@ function guidelines_tab() {
     docModal.innerHTML = `
         <div class="modal-box" style="max-width: 780px;">
             <div class="modal-header">
-                <h3 id="doc-modal-title" style="color: #f8fafc; font-size: 1.05rem;">Guideline Document Inspector</h3>
-                <button type="button" class="btn-close" id="doc-modal-close-btn">&times;</button>
+                <h3 id="doc-modal-title">Guideline Document Inspector</h3>
+                <button type="button" class="btn-close" id="doc-modal-close-btn" aria-label="Close inspector">&times;</button>
             </div>
-            <div style="margin-bottom: 10px; font-size: 0.78rem; color: var(--text-muted);" id="doc-modal-meta"></div>
-            <pre id="doc-modal-content" style="background: #090d16; border: 1px solid var(--border-subtle); border-radius: 6px; padding: 18px; color: #38bdf8; font-family: var(--font-mono); font-size: 0.8rem; max-height: 60vh; overflow: auto; white-space: pre-wrap; line-height: 1.55;"></pre>
+            <div id="doc-modal-meta" class="doc-modal-meta-mono"></div>
+            <pre id="doc-modal-content"></pre>
         </div>
     `;
     document.body.appendChild(docModal);
@@ -225,11 +231,11 @@ function guidelines_tab() {
 
             // Show loading state in #guidelines-status-banner
             showStatusBanner(
-                `<div style="display: flex; align-items: center; gap: 10px;">
+                `<div class="status-banner-content">
                     <div class="status-loading-spinner"></div>
-                    <div>
+                    <div class="status-banner-text-group">
                         <strong>Validating ${pendingGuidelineFiles.length} candidate file(s) with Gemini AI...</strong>
-                        <div style="font-size: 0.76rem; color: #94a3b8; margin-top: 2px;">Cross-referencing organizational style consistency and policy compatibility.</div>
+                        <div class="status-banner-subtext">Cross-referencing organizational style consistency and policy compatibility.</div>
                     </div>
                 </div>`,
                 'read-only'
@@ -284,24 +290,24 @@ function guidelines_tab() {
         const body = document.getElementById('guideline-confirm-body');
 
         const fileItems = files.map(f => `
-            <li style="margin-bottom: 4px;">
-                <strong style="color: #f8fafc;">${escapeHtml(f.name)}</strong>
-                <span style="color: var(--text-muted); font-size: 0.78rem;">(${formatBytes(f.size)})</span>
+            <li class="confirm-file-item">
+                <strong class="confirm-file-name">${escapeHtml(f.name)}</strong>
+                <span class="confirm-file-size">(${formatBytes(f.size)})</span>
             </li>
         `).join('');
 
         body.innerHTML = `
-            <div style="margin-bottom: 14px;">
+            <div class="confirm-intro-block">
                 <p>The following candidate guideline document(s) were analyzed by TrueTone AI and verified compatible with existing standards:</p>
-                <ul style="margin: 10px 0 14px 20px;">${fileItems}</ul>
+                <ul class="confirm-files-list">${fileItems}</ul>
             </div>
 
-            <div style="background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 8px; padding: 12px 14px; margin-bottom: 16px;">
-                <div style="font-size: 0.72rem; color: #6ee7b7; text-transform: uppercase; font-weight: 700; margin-bottom: 2px;">AI Knowledge Summary</div>
-                <div style="font-size: 0.84rem; color: #d1fae5;">${escapeHtml(report.summary || 'Adds verified brand rules.')}</div>
+            <div class="confirm-summary-card">
+                <div class="confirm-summary-label">AI Knowledge Summary</div>
+                <div class="confirm-summary-desc">${escapeHtml(report.summary || 'Adds verified brand rules.')}</div>
             </div>
 
-            <p style="font-weight: 600; color: #f8fafc;">
+            <p class="confirm-prompt-question">
                 Do you want to upload and activate these files in the organisation's guidelines folder?
             </p>
         `;
@@ -376,8 +382,8 @@ function guidelines_tab() {
 
         const badFiles = report.incompatible_files || [];
         if (badFiles.length > 0) {
-            filesEl.style.display = 'block';
-            filesEl.innerHTML = badFiles.map(f => `<li><strong>${escapeHtml(f)}</strong> — flagged as incompatible</li>`).join('');
+            filesEl.style.display = 'flex';
+            filesEl.innerHTML = badFiles.map(f => `<li class="warning-file-chip"><strong>${escapeHtml(f)}</strong><span class="warning-chip-badge">Flagged</span></li>`).join('');
         } else {
             filesEl.style.display = 'none';
         }
@@ -415,11 +421,11 @@ function guidelines_tab() {
 
             // Show loading state
             showStatusBanner(
-                `<div style="display: flex; align-items: center; gap: 10px;">
+                `<div class="status-banner-content">
                     <div class="status-loading-spinner"></div>
-                    <div>
+                    <div class="status-banner-text-group">
                         <strong>Scanning ${files.length} past publication(s) for brand tone, consistency, terminology, and verified data patterns...</strong>
-                        <div style="font-size: 0.76rem; color: #94a3b8; margin-top: 2px;">Gemini 2.5 Flash is reverse-engineering implicit brand standards.</div>
+                        <div class="status-banner-subtext">Gemini 2.5 Flash is reverse-engineering implicit brand standards.</div>
                     </div>
                 </div>`,
                 'read-only'
@@ -472,16 +478,16 @@ function guidelines_tab() {
         container.className = 'extracted-preview-card';
         container.style.display = 'block';
         container.innerHTML = `
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                <div style="display: flex; align-items: center; gap: 8px;">
-                    <span style="font-size: 1.2rem;">✨</span>
-                    <strong style="color: #6ee7b7; font-size: 1.05rem;">Past Publishes Analyzed & Appended to <code>${escapeHtml(result.target_file)}</code></strong>
+            <div class="extracted-card-header">
+                <div class="extracted-header-title-group">
+                    <span class="extracted-badge-tag">AI-Synthesized</span>
+                    <strong class="extracted-card-heading">Past Publishes Analyzed & Appended to <code>${escapeHtml(result.target_file)}</code></strong>
                 </div>
-                <button type="button" class="btn-secondary" style="padding: 4px 10px; font-size: 0.76rem;" onclick="document.getElementById('past-publishes-result-container').style.display='none'">
+                <button type="button" class="btn-secondary extracted-dismiss-btn" onclick="document.getElementById('past-publishes-result-container').style.display='none'">
                     ✕ Dismiss Preview
                 </button>
             </div>
-            <p style="font-size: 0.82rem; color: var(--text-secondary); margin-bottom: 10px;">
+            <p class="extracted-card-subtext">
                 TrueTone AI has synthesized the following implicit corporate guidelines, terminology rules, and verified facts. These insights are now active in the knowledge base.
             </p>
             <div class="extracted-markdown-viewport">
@@ -509,9 +515,11 @@ function guidelines_tab() {
             const files = data.files || [];
             if (files.length === 0) {
                 listEl.innerHTML = `
-                    <div style="background: var(--bg-surface-elevated); padding: 36px; border-radius: 8px; text-align: center; color: var(--text-muted); grid-column: 1 / -1;">
-                        <h4>No Guideline Documents Found</h4>
-                        <p style="font-size: 0.82rem; margin-top: 4px;">Upload your first brand document using the button above.</p>
+                    <div class="guidelines-empty-state wash">
+                        <div class="guidelines-empty-inner">
+                            <h4 class="guidelines-empty-title">No Guideline Documents Found</h4>
+                            <p class="guidelines-empty-instruction">Upload your first brand document using the button above.</p>
+                        </div>
                     </div>
                 `;
                 return;
@@ -520,33 +528,40 @@ function guidelines_tab() {
             listEl.innerHTML = files.map(file => {
                 const ext = (file.extension || '').replace('.', '').toUpperCase() || 'FILE';
                 const isExtracted = file.name === 'past_data_from_reviews.md';
-                const badgeClass = isExtracted ? 'style="background: rgba(16, 185, 129, 0.15); color: #6ee7b7; border-color: rgba(16, 185, 129, 0.3);"' : '';
+                const badgeClass = isExtracted ? 'badge-ai' : (ext.toLowerCase() === 'txt' ? 'badge-txt' : 'badge-md');
+                const badgeLabel = isExtracted ? 'AI-LEARNED' : ext;
+                const desc = getGuidelineDescription(file.name);
+                const updatedIso = file.updated_at ? new Date(file.updated_at).toISOString().split('T')[0] : 'UNKNOWN';
 
                 return `
                     <div class="guideline-file-card" data-filename="${escapeHtml(file.name)}">
                         <div class="guideline-file-top">
-                            <span class="guideline-file-badge" ${badgeClass}>${isExtracted ? 'AI-LEARNED' : ext}</span>
-                            <div style="overflow: hidden;">
+                            <span class="guideline-file-badge ${badgeClass}">${badgeLabel}</span>
+                            <div class="guideline-file-info">
                                 <div class="guideline-file-name" title="${escapeHtml(file.name)}">${escapeHtml(file.name)}</div>
-                                <div class="guideline-file-meta">
-                                    <span>${formatBytes(file.size)}</span>
-                                    <span>&bull;</span>
-                                    <span>Modified: ${new Date(file.updated_at).toLocaleDateString()}</span>
-                                </div>
+                                <div class="guideline-file-desc">${escapeHtml(desc)}</div>
                             </div>
                         </div>
 
                         <div class="guideline-file-bottom">
-                            <span style="font-size: 0.72rem; color: #10b981; font-weight: 600;">✓ Active in AI Prompt</span>
-                            <button type="button" class="btn-secondary" style="padding: 4px 10px; font-size: 0.76rem;" onclick="window.viewGuidelineDocument('${escapeHtml(file.name)}')">
-                                View Document &rarr;
+                            <div class="guideline-file-meta">
+                                <span class="guideline-status-tag">✓ Active in Prompt</span>
+                                <div class="guideline-meta-subline">
+                                    <span class="guideline-meta-size">${formatBytes(file.size)}</span>
+                                    <span>•</span>
+                                    <span class="guideline-meta-updated">UPDATED ${updatedIso}</span>
+                                </div>
+                            </div>
+                            <button type="button" class="btn-secondary guideline-view-btn" onclick="window.viewGuidelineDocument('${escapeHtml(file.name)}')">
+                                <span>View</span>
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
                             </button>
                         </div>
                     </div>
                 `;
             }).join('');
         } catch (err) {
-            listEl.innerHTML = `<div style="color: var(--accent-rose); padding: 18px; grid-column: 1 / -1;">Error loading guidelines: ${err.message}</div>`;
+            listEl.innerHTML = `<div style="color: var(--violation, #D2453D); padding: 18px; grid-column: 1 / -1;">Error loading guidelines: ${err.message}</div>`;
         }
     }
 
@@ -621,12 +636,27 @@ function formatBytes(bytes, decimals = 1) {
 function formatMarkdown(md) {
     if (!md) return '';
     return md
-        .replace(/### (.*?)\n/g, '<h3 style="color: #6ee7b7; margin: 12px 0 4px 0; font-size: 0.92rem;">$1</h3>')
-        .replace(/## (.*?)\n/g, '<h2 style="color: #60a5fa; margin: 14px 0 6px 0; font-size: 1.05rem;">$1</h2>')
-        .replace(/\*\*(.*?)\*\*/g, '<strong style="color: #f8fafc;">$1</strong>')
+        .replace(/### (.*?)\n/g, '<h3 class="extracted-pattern-title">$1</h3>')
+        .replace(/## (.*?)\n/g, '<h2 class="extracted-pattern-group">$1</h2>')
+        .replace(/\*\*(.*?)\*\*/g, '<strong class="extracted-pattern-bold">$1</strong>')
         .replace(/\*(.*?)\*/g, '<em>$1</em>')
-        .replace(/`(.*?)`/g, '<code style="background: rgba(255,255,255,0.08); padding: 1px 4px; border-radius: 3px; font-family: monospace; color: #38bdf8;">$1</code>')
-        .replace(/- (.*?)\n/g, '<li style="margin-bottom: 4px;">$1</li>');
+        .replace(/`(.*?)`/g, '<code class="extracted-pattern-code">$1</code>')
+        .replace(/- (.*?)\n/g, '<li class="extracted-pattern-item">$1</li>');
+}
+
+function getGuidelineDescription(filename) {
+    const descMap = {
+        'brand_voice_and_tone.md': 'Core voice principles, probabilistic style, anti-clickbait rules, and TrueTone CamelCase.',
+        'approved_facts_and_claims.txt': 'Verified performance benchmarks (sub-10ms, 99.9% consistency) and Section 27A SEC safe harbor.',
+        'visual_and_accessibility_standards.md': 'Approved hex palettes, 4.5:1 WCAG contrast ratios, typography hierarchy, and safe margins.',
+        'audio_and_voice_standards.md': 'Voice clarity, acoustic governance standards, pacing, and spoken disclaimer compliance.',
+        'video_and_motion_standards.md': 'Motion graphics rules, frame-rate consistency, transition standards, and visual disclaimers.',
+        'past_data_from_reviews.md': 'Synthesized historical guidelines and empirical terminology extracted from approved publications.'
+    };
+    if (descMap[filename]) return descMap[filename];
+    if (filename.endsWith('.md')) return 'Markdown guideline policy document ingested for live pre-flight content reviews.';
+    if (filename.endsWith('.txt')) return 'Plain text brand knowledge source ingested for live pre-flight content reviews.';
+    return 'Approved organizational reference standard enforced during pre-flight content audits.';
 }
 
 // Expose globally
