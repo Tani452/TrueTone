@@ -1,0 +1,110 @@
+/* =============================================================================
+   TrueTone Base Stylesheet — Phase 1 Light Warm Editorial Base
+   ============================================================================= */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+/* Thin Warm Scrollbars */
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--canvas);
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--line-strong);
+    border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--ink-3);
+}
+
+/* Base Body Styles on --canvas, 14px/1.5 Inter, zero text-shadow */
+body {
+    font-family: var(--font-sans);
+    font-size: var(--font-size-base, 14px);
+    line-height: var(--line-height-normal, 1.5);
+    background-color: var(--canvas);
+    color: var(--ink);
+    text-shadow: none;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    overflow: hidden;
+    height: 100vh;
+}
+
+/* App Master Layout */
+.app-container {
+    display: flex;
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+    background-color: var(--canvas);
+    text-shadow: none;
+}
+
+/* Heading Typography: Newsreader serif for H1/H2 (page titles & hero), Inter for H3-H6 */
+h1, h2, h3, h4, h5, h6 {
+    color: var(--ink);
+    font-weight: 600;
+    line-height: var(--line-height-tight, 1.25);
+    text-shadow: none;
+}
+
+h1, h2 {
+    font-family: var(--font-serif);
+}
+
+h3, h4, h5, h6 {
+    font-family: var(--font-sans);
+}
+
+/* Links */
+a {
+    color: var(--azure);
+    text-decoration: none;
+    transition: color 0.15s ease;
+}
+
+a:hover {
+    color: #1a87b8;
+    text-decoration: underline;
+}
+
+/* Warm Text Selection */
+::selection {
+    background-color: var(--azure-soft);
+    color: var(--ink);
+}
+
+/* Visible Accessible Focus Ring for Interactive Elements (2px azure, 2px offset) */
+:focus-visible,
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+[tabindex]:focus-visible {
+    outline: 2px solid var(--azure) !important;
+    outline-offset: 2px !important;
+}
+
+/* Accessible Motion Preferences */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+}

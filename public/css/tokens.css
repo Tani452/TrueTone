@@ -1,0 +1,200 @@
+/* =============================================================================
+   TrueTone Design System — Light Warm Editorial Tokens
+   Phase 1 Architecture
+   ============================================================================= */
+
+:root {
+   /* -------------------------------------------------------------------------
+       Core Palette: Light Warm Editorial
+       ------------------------------------------------------------------------- */
+   --canvas: #ECEAE3;
+   --paper: #FFFFFF;
+   --paper-warm: #FAF8F5;
+   --sidebar: #FBFAF7;
+
+   --ink: #17171B;
+   --ink-2: #55555E;
+   --ink-3: #8A8A93;
+
+   --line: #E4E1D8;
+   --line-strong: #CBC7BC;
+   --fill: #F2F0EA;
+
+   /* Intent / Accent Tokens & Soft Tints */
+   --azure: #27A9E1;
+   --azure-soft: #E3F4FB;
+
+   --pass: #2F9D6C;
+   --pass-soft: #E6F5EE;
+
+   --caution: #C98A1E;
+   --caution-soft: #FAF2E2;
+
+   --violation: #D2453D;
+   --violation-soft: #FAECEB;
+
+   /* Editorial Wash Stops */
+   --wash-1: #F8DDA6;
+   --wash-2: #A5DBF3;
+   --wash-3: #BDB8F2;
+   --wash-peach: #F8DDA6;
+   --wash-cyan: #A5DBF3;
+   --wash-lavender: #BDB8F2;
+
+   /* -------------------------------------------------------------------------
+       Chamfers / Radii (8 / 12 / 16 / 24)
+       ------------------------------------------------------------------------- */
+   --radius-sm: 8px;
+   --radius-md: 12px;
+   --radius-lg: 16px;
+   --radius-xl: 24px;
+
+   /* -------------------------------------------------------------------------
+       Elevation & Shadows (One subtle shadow + one overlay shadow, no glows)
+       ------------------------------------------------------------------------- */
+   --shadow-subtle: 0 1px 3px rgba(23, 23, 27, 0.06), 0 1px 2px rgba(23, 23, 27, 0.04);
+   --shadow-overlay: 0 12px 32px rgba(23, 23, 27, 0.12), 0 4px 12px rgba(23, 23, 27, 0.06);
+
+   /* -------------------------------------------------------------------------
+       Typography Scale & Font Families
+       Newsreader (serif) only for page titles and the hero
+       Inter for UI at 14px
+       JetBrains Mono 11px only for group labels and timestamps
+       ------------------------------------------------------------------------- */
+   --font-serif: 'Newsreader', Georgia, serif;
+   --font-display: 'Newsreader', Georgia, serif;
+   --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+   --font-mono: 'JetBrains Mono', monospace;
+
+   --font-size-xs: 11px;
+   --font-size-sm: 12px;
+   --font-size-base: 14px;
+   --font-size-md: 16px;
+   --font-size-lg: 18px;
+   --font-size-xl: 20px;
+   --font-size-2xl: 24px;
+   --font-size-3xl: 30px;
+   --font-size-hero: 36px;
+
+   --line-height-tight: 1.25;
+   --line-height-normal: 1.5;
+   --line-height-relaxed: 1.6;
+
+   /* -------------------------------------------------------------------------
+       Spacing Scale (4px Base)
+       ------------------------------------------------------------------------- */
+   --space-1: 4px;
+   --space-2: 8px;
+   --space-3: 12px;
+   --space-4: 16px;
+   --space-5: 20px;
+   --space-6: 24px;
+   --space-8: 32px;
+   --space-10: 40px;
+   --space-12: 48px;
+   --space-16: 64px;
+
+   /* =========================================================================
+       LEGACY ALIASES (Marked for removal in Phase 8)
+       Preserves unmigrated components so they remain legible in light theme.
+       ========================================================================= */
+   /* Backgrounds & borders /* legacy alias */
+   */ --bg-primary: var(--canvas);
+   /* legacy alias */
+   --bg-secondary: var(--sidebar);
+   /* legacy alias */
+   --bg-surface: var(--paper);
+   /* legacy alias */
+   --bg-surface-elevated: var(--paper-warm);
+   /* legacy alias */
+   --bg-surface-hover: var(--fill);
+   /* legacy alias */
+   --border-strong: var(--line-strong);
+   /* legacy alias */
+   --border-subtle: var(--line);
+   /* legacy alias */
+
+   /* Typography & text /* legacy alias */
+   */ --text-primary: var(--ink);
+   /* legacy alias */
+   --text-secondary: var(--ink-2);
+   /* legacy alias */
+   --text-muted: var(--ink-3);
+   /* legacy alias */
+   --font-hud: var(--font-sans);
+   /* legacy alias */
+
+   /* Neons mapped to warm editorial equivalents /* legacy alias */
+   */ --neon-amber: var(--caution);
+   /* legacy alias */
+   --neon-amber-bright: var(--caution);
+   /* legacy alias */
+   --neon-amber-glow: transparent;
+   /* legacy alias */
+   --neon-amber-dim: var(--caution-soft);
+   /* legacy alias */
+
+   --neon-cyan: var(--azure);
+   /* legacy alias */
+   --neon-cyan-bright: var(--azure);
+   /* legacy alias */
+   --neon-cyan-glow: transparent;
+   /* legacy alias */
+   --neon-cyan-dim: var(--azure-soft);
+   /* legacy alias */
+
+   --neon-pink: var(--violation);
+   /* legacy alias */
+   --neon-pink-bright: var(--violation);
+   /* legacy alias */
+   --neon-pink-glow: transparent;
+   /* legacy alias */
+   --neon-pink-dim: var(--violation-soft);
+   /* legacy alias */
+
+   --neon-emerald: var(--pass);
+   /* legacy alias */
+   --neon-emerald-glow: transparent;
+   /* legacy alias */
+   --neon-emerald-dim: var(--pass-soft);
+   /* legacy alias */
+
+   --neon-crimson: var(--violation);
+   /* legacy alias */
+   --neon-crimson-glow: transparent;
+   /* legacy alias */
+
+   /* Component accents /* legacy alias */
+   */ --accent-blue: var(--azure);
+   /* legacy alias */
+   --accent-blue-hover: #1a87b8;
+   /* legacy alias */
+   --accent-cyan: var(--azure);
+   /* legacy alias */
+   --accent-cyan-glow: transparent;
+   /* legacy alias */
+   --accent-emerald: var(--pass);
+   /* legacy alias */
+   --accent-amber: var(--caution);
+   /* legacy alias */
+   --accent-rose: var(--violation);
+   /* legacy alias */
+   --accent-purple: #8F75DE;
+   /* legacy alias */
+   --accent-green: var(--pass);
+   /* legacy alias */
+   --accent-yellow: var(--caution);
+   /* legacy alias */
+   --accent-red: var(--violation);
+   /* legacy alias */
+
+   /* Shadows & glows /* legacy alias */
+   */ --shadow-card: var(--shadow-subtle);
+   /* legacy alias */
+   --shadow-glow: none;
+   /* legacy alias */
+   --shadow-glow-amber: none;
+   /* legacy alias */
+   --shadow-glow-pink: none;
+   /* legacy alias */
+}
