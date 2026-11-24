@@ -40,24 +40,30 @@ function publish_tab() {
     composerWrapper.id = 'publish-composer-viewport';
 
     composerWrapper.innerHTML = `
-        <div class="composer-header">
-            <div class="composer-header-title">
-                <h2>Create & Verify Content</h2>
-                <p>Author official communications, inspect tone deviations against guidelines, and submit for verification.</p>
-            </div>
-            <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 6px;">
-                <span class="ai-disclosure-badge">
-                    <span>✨</span>
-                    <span>Powered by Gemini &bull; Checked against approved guidelines</span>
-                </span>
-                <span style="font-size: 0.74rem; color: var(--text-muted);">
-                    Author: <strong style="color: var(--text-primary);">${escapeHtml(currentUser.user_name)}</strong> (${escapeHtml(currentUser.department)})
-                </span>
+        <div class="composer-header wash">
+            <div class="composer-header-content">
+                <div class="composer-header-title">
+                    <h2>What are you publishing today, ${escapeHtml(currentUser.user_name ? currentUser.user_name.split(' ')[0] : 'Creator')}?</h2>
+                    <p>Author official communications, inspect tone deviations against guidelines, and submit for verification.</p>
+                </div>
+                <div class="composer-header-meta">
+                    <span class="ai-disclosure-badge">
+                        <svg class="disclosure-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <line x1="12" y1="16" x2="12" y2="12"></line>
+                            <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                        </svg>
+                        <span>Powered by Gemini &bull; Checked against approved guidelines</span>
+                    </span>
+                    <span class="composer-author-tag">
+                        Author: <strong>${escapeHtml(currentUser.user_name)}</strong> (${escapeHtml(currentUser.department)})
+                    </span>
+                </div>
             </div>
         </div>
 
         <!-- Dynamic Verification Status Banner -->
-        <div id="publish-status-banner" style="display: none; margin-bottom: 16px;"></div>
+        <div id="publish-status-banner" style="display: none;"></div>
 
         <!-- Compose Card Container -->
         <div id="compose-card">
@@ -71,50 +77,104 @@ function publish_tab() {
             <div id="compose-toolbar">
                 <!-- Left Side: + Attachment Trigger & Dropdown -->
                 <div class="attachment-trigger-wrapper">
-                    <button type="button" id="add-attachment-btn" title="Attach files">
-                        +
+                    <button type="button" id="add-attachment-btn" title="Attach files" aria-label="Attach files">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <line x1="12" y1="5" x2="12" y2="19"></line>
+                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                        </svg>
                     </button>
                     <div id="attachment-dropdown">
                         <button type="button" class="dropdown-item" id="btn-attach-doc">
-                            <span>📄</span>
+                            <svg class="dropdown-item-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                <polyline points="14 2 14 8 20 8"></polyline>
+                                <line x1="16" y1="13" x2="8" y2="13"></line>
+                                <line x1="16" y1="17" x2="8" y2="17"></line>
+                                <polyline points="10 9 9 9 8 9"></polyline>
+                            </svg>
                             <span>Document</span>
                         </button>
                         <button type="button" class="dropdown-item" id="btn-attach-img">
-                            <span>🖼️</span>
+                            <svg class="dropdown-item-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                                <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                                <polyline points="21 15 16 10 5 21"></polyline>
+                            </svg>
                             <span>Image</span>
                         </button>
                         <button type="button" class="dropdown-item" id="btn-attach-vid">
-                            <span>🎥</span>
+                            <svg class="dropdown-item-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <polygon points="23 7 16 12 23 17 23 7"></polygon>
+                                <rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect>
+                            </svg>
                             <span>Video</span>
                         </button>
                         <button type="button" class="dropdown-item" id="btn-attach-aud">
-                            <span>🎵</span>
+                            <svg class="dropdown-item-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <path d="M9 18V5l12-2v13"></path>
+                                <circle cx="6" cy="18" r="3"></circle>
+                                <circle cx="18" cy="16" r="3"></circle>
+                            </svg>
                             <span>Audio</span>
                         </button>
                     </div>
                 </div>
 
                 <!-- Right Side: Workflow Buttons -->
-                <div style="display: flex; gap: 12px; align-items: center;">
+                <div class="compose-toolbar-actions">
                     <button type="button" class="btn-primary" id="review-btn">
-                        🛡️ Review with AI
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                        </svg>
+                        <span>Review with AI</span>
                     </button>
-                    <button type="button" class="btn-primary" id="final-upload-btn" style="display: none; background: linear-gradient(135deg, #10b981, #059669);">
-                        🚀 Upload & Submit
+                    <button type="button" class="btn-primary btn-publish-submit" id="final-upload-btn" style="display: none;">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <polyline points="20 6 9 17 4 12"/>
+                        </svg>
+                        <span>Upload & Submit</span>
                     </button>
                 </div>
             </div>
         </div>
 
         <!-- Live Guideline Reference Footnote & AI Disclosure -->
-        <div style="margin-top: 14px; display: flex; flex-direction: column; gap: 6px; font-size: 0.76rem; color: var(--text-muted);">
-            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
-                <span>Enforcing: <code>brand_voice_and_tone.md</code> &bull; <code>approved_facts_and_claims.txt</code> &bull; <code>visual_and_accessibility_standards.md</code> &bull; <code>video_and_motion_standards.md</code> &bull; <code>audio_and_voice_standards.md</code></span>
-                <span>Target Engine: <code>POST /api/publish-submission</code></span>
+        <div class="publish-footer-guidelines">
+            <div class="publish-guideline-strip">
+                <div class="publish-guideline-group">
+                    <span class="publish-guideline-label">Enforcing:</span>
+                    <div class="publish-guideline-chips">
+                        <span class="publish-file-chip">
+                            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+                            <code>brand_voice_and_tone.md</code>
+                        </span>
+                        <span class="publish-file-chip">
+                            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+                            <code>approved_facts_and_claims.txt</code>
+                        </span>
+                        <span class="publish-file-chip">
+                            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+                            <code>visual_and_accessibility_standards.md</code>
+                        </span>
+                        <span class="publish-file-chip">
+                            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+                            <code>video_and_motion_standards.md</code>
+                        </span>
+                        <span class="publish-file-chip">
+                            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+                            <code>audio_and_voice_standards.md</code>
+                        </span>
+                    </div>
+                </div>
+                <span class="publish-target-engine">Target Engine: <code>POST /api/publish-submission</code></span>
             </div>
-            <div style="color: #64748b; font-size: 0.72rem; display: flex; align-items: center; gap: 6px;">
-                <span>🛡️ AI-Reviewed Disclosure:</span>
-                <span>Media and attachments are sent to Google Gemini for multimodal compliance audit (max 100MB video, 50MB audio). Files are never stored by TrueTone beyond the review.</span>
+            <div class="publish-ai-disclosure">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="12" y1="16" x2="12" y2="12"></line>
+                    <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                </svg>
+                <span>AI-Reviewed Disclosure: Media and attachments are sent to Google Gemini for multimodal compliance audit (max 100MB video, 50MB audio). Files are never stored by TrueTone beyond the review.</span>
             </div>
         </div>
     `;
@@ -131,10 +191,10 @@ function publish_tab() {
     previewModal.innerHTML = `
         <div class="file-preview-content">
             <div class="file-preview-header">
-                <span id="tt-modal-file-title" style="font-weight: 600; font-size: 0.9rem; color: #fff;">File Preview</span>
-                <div style="display: flex; gap: 12px; align-items: center;">
-                    <a id="tt-modal-external-link" href="#" target="_blank" style="color: #38bdf8; font-size: 0.8rem; text-decoration: none;">Open in New Tab &nearr;</a>
-                    <button type="button" class="btn-close" id="tt-modal-close-btn">&times;</button>
+                <span id="tt-modal-file-title" class="file-preview-title">File Preview</span>
+                <div class="file-preview-header-actions">
+                    <a id="tt-modal-external-link" class="file-preview-ext-link" href="#" target="_blank">Open in New Tab &nearr;</a>
+                    <button type="button" class="btn-close" id="tt-modal-close-btn" aria-label="Close dialog">&times;</button>
                 </div>
             </div>
             <div class="file-preview-body" id="tt-modal-file-body"></div>
@@ -323,7 +383,7 @@ function publish_tab() {
                 videoThumb.style.cssText = 'width: 100%; height: 100%; object-fit: cover; border-radius: 4px;';
                 thumbBox.appendChild(videoThumb);
             } else if (isAudio) {
-                thumbBox.innerHTML = `<span style="font-size: 1.4rem;">🎵</span>`;
+                thumbBox.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>`;
             } else {
                 const ext = file.name.split('.').pop().toUpperCase();
                 thumbBox.innerHTML = `<span class="doc-type-icon">${escapeHtml(ext.substring(0, 4))}</span>`;
@@ -335,7 +395,7 @@ function publish_tab() {
             infoBox.innerHTML = `
                 <span class="tt-chip-name" title="${escapeHtml(file.name)}">${escapeHtml(file.name)}</span>
                 <span class="tt-chip-size">${formatBytes(file.size)}</span>
-                ${isAudio ? `<audio controls preload="metadata" src="${URL.createObjectURL(file)}" style="height: 24px; width: 100%; max-width: 140px; margin-top: 3px;" onclick="event.stopPropagation();"></audio>` : ''}
+                ${isAudio ? `<audio controls preload="metadata" src="${URL.createObjectURL(file)}" class="tt-chip-audio-player" onclick="event.stopPropagation();"></audio>` : ''}
             `;
 
             // Remove button
@@ -583,8 +643,11 @@ function publish_tab() {
         if (totalUnresolved === 0) {
             statusBanner.className = 'banner-notice success';
             statusBanner.innerHTML = `
-                <div style="display: flex; align-items: center; gap: 8px;">
-                    <span style="font-size: 1.1rem;">✓</span>
+                <div class="banner-status-content">
+                    <svg class="banner-status-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                        <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                    </svg>
                     <span><strong>Zero brand guideline issues detected!</strong> Ready to publish directly to official channels.</span>
                 </div>
             `;
@@ -605,9 +668,13 @@ function publish_tab() {
             let fileIssuesHtml = '';
             if (unresolvedFiles > 0) {
                 fileIssuesHtml = `
-                    <div style="margin-top: 14px; border-top: 1px solid rgba(255, 132, 0, 0.3); padding-top: 12px; display: flex; flex-direction: column; gap: 10px; width: 100%;">
-                        <div style="display: flex; align-items: center; gap: 8px; font-weight: 700; color: #ff5277; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em;">
-                            <span>🚨</span>
+                    <div class="asset-violations-wrapper">
+                        <div class="asset-violations-header">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <line x1="12" y1="8" x2="12" y2="12"></line>
+                                <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                            </svg>
                             <span>Detected Violation(s) in Uploaded Files (${unresolvedFiles})</span>
                         </div>
                         ${currentReviewResult.bad_files.map(b => {
@@ -615,57 +682,70 @@ function publish_tab() {
                                 (b.file_name && ['.mp4', '.mov', '.webm', '.mpeg', '.avi'].some(ext => b.file_name.toLowerCase().endsWith(ext)));
                             const isAud = (b.media_type === 'audio') ||
                                 (b.file_name && ['.mp3', '.wav', '.m4a', '.aac', '.ogg', '.flac'].some(ext => b.file_name.toLowerCase().endsWith(ext)));
-                            const mediaBadge = isVid ? '🎥 VIDEO' : (isAud ? '🎵 AUDIO' : ((b.media_type === 'image') ? '🖼️ IMAGE' : '📄 DOCUMENT'));
+                            const mediaBadge = isVid ? 'VIDEO' : (isAud ? 'AUDIO' : ((b.media_type === 'image') ? 'IMAGE' : 'DOCUMENT'));
                             const ruleId = b.rule_id || (isVid ? 'VID-01' : (isAud ? 'AUD-01' : 'VIS-01'));
                             const guideSource = b.guideline_source || (isVid ? 'guidelines/video_and_motion_standards.md' : (isAud ? 'guidelines/audio_and_voice_standards.md' : 'guidelines/visual_and_accessibility_standards.md'));
                             const findings = Array.isArray(b.findings) ? b.findings : [];
 
                             return `
-                            <div class="asset-violation-card" style="background: rgba(8, 14, 28, 0.85); border: 1px solid rgba(255, 82, 119, 0.4); border-radius: 6px; padding: 12px 14px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);">
-                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; flex-wrap: wrap; gap: 6px;">
-                                    <div style="font-weight: 700; color: #f8fafc; font-size: 0.9rem; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
-                                        <span style="font-size: 0.72rem; color: #38bdf8; background: rgba(56, 189, 248, 0.15); border: 1px solid #38bdf8; padding: 2px 7px; border-radius: 4px; font-weight: 700;">${mediaBadge}</span>
-                                        <span style="font-size: 0.72rem; color: #f59e0b; background: rgba(245, 158, 11, 0.15); border: 1px solid #f59e0b; padding: 2px 7px; border-radius: 4px; font-weight: 700; font-family: monospace;">${escapeHtml(ruleId)}</span>
-                                        <span>${escapeHtml(b.file_name)}</span>
+                            <div class="asset-violation-card">
+                                <div class="asset-violation-top">
+                                    <div class="asset-violation-meta">
+                                        <span class="asset-type-badge">${mediaBadge}</span>
+                                        <span class="asset-rule-tag">${escapeHtml(ruleId)}</span>
+                                        <span class="asset-file-name">${escapeHtml(b.file_name)}</span>
                                     </div>
-                                    <div style="display: flex; gap: 8px; align-items: center;">
-                                        <span style="font-size: 0.72rem; color: #ff5277; background: rgba(255, 82, 119, 0.15); border: 1px solid #ff5277; padding: 2px 8px; border-radius: 4px; font-weight: 700; text-transform: uppercase;">Flagged Violation</span>
-                                        <button type="button" class="btn-remove-bad-file" data-filename="${escapeHtml(b.file_name)}" style="background: rgba(255, 82, 119, 0.2); border: 1px solid #ff5277; color: #ff8fa3; padding: 3px 10px; border-radius: 4px; font-size: 0.76rem; cursor: pointer; font-weight: 600;">🗑️ Remove File</button>
+                                    <div class="asset-violation-controls">
+                                        <span class="asset-flag-badge">Flagged Violation</span>
+                                        <button type="button" class="btn-remove-bad-file" data-filename="${escapeHtml(b.file_name)}">
+                                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                                <polyline points="3 6 5 6 21 6"></polyline>
+                                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                                            </svg>
+                                            <span>Remove File</span>
+                                        </button>
                                     </div>
                                 </div>
-                                <div style="font-size: 0.74rem; color: var(--text-muted); margin-bottom: 8px;">
-                                    Guideline Source: <code style="color: #93c5fd;">${escapeHtml(guideSource)}</code>
+                                <div class="asset-guide-source">
+                                    <span>Guideline Source:</span> <code>${escapeHtml(guideSource)}</code>
                                 </div>
-                                <div style="margin-bottom: 8px; font-size: 0.86rem; line-height: 1.4; color: #fca5a5;">
-                                    <strong style="color: #ff6b81;">Violation:</strong> ${escapeHtml(b.problem)}
+                                <div class="asset-violation-problem">
+                                    <strong>Violation:</strong> ${escapeHtml(b.problem)}
                                 </div>
-                                <div style="background: rgba(6, 182, 212, 0.09); border-left: 3px solid #06b6d4; padding: 8px 12px; border-radius: 4px; font-size: 0.83rem; line-height: 1.4; color: #e2e8f0; margin-bottom: 8px;">
-                                    <div style="font-size: 0.7rem; color: #38bdf8; font-weight: 700; text-transform: uppercase; margin-bottom: 2px; letter-spacing: 0.05em;">Recommended Remedy</div>
-                                    <span>${escapeHtml(b.suggestion)}</span>
+                                <div class="asset-violation-remedy">
+                                    <div class="asset-remedy-heading">Recommended Remedy</div>
+                                    <span class="asset-remedy-text">${escapeHtml(b.suggestion)}</span>
                                 </div>
                                 ${b.transcript ? `
-                                    <details style="margin-top: 8px; margin-bottom: 8px; border-top: 1px dashed rgba(255,255,255,0.1); padding-top: 6px;">
-                                        <summary style="cursor: pointer; font-size: 0.76rem; color: #38bdf8; font-weight: 600;">📝 Spoken Transcript</summary>
-                                        <div style="font-size: 0.78rem; color: #cbd5e1; margin-top: 4px; padding: 6px 10px; background: rgba(0,0,0,0.35); border-radius: 4px; white-space: pre-wrap; font-family: inherit;">${escapeHtml(b.transcript)}</div>
+                                    <details class="asset-transcript-details">
+                                        <summary class="asset-transcript-summary">
+                                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+                                            <span>Spoken Transcript</span>
+                                        </summary>
+                                        <div class="asset-transcript-body">${escapeHtml(b.transcript)}</div>
                                     </details>
                                 ` : ''}
                                 ${findings.length > 0 ? `
-                                    <div style="margin-top: 10px; border-top: 1px solid rgba(255, 255, 255, 0.1); padding-top: 8px;">
-                                        <div style="font-size: 0.74rem; color: #94a3b8; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px;">
-                                            ⏱️ Timestamped Findings (${findings.length})
+                                    <div class="asset-findings-section">
+                                        <div class="asset-findings-heading">
+                                            <span>Timestamped Findings (${findings.length})</span>
                                         </div>
-                                        <div style="display: flex; flex-direction: column; gap: 6px;">
+                                        <div class="asset-findings-list">
                                             ${findings.map(f => `
-                                                <div style="background: rgba(0, 0, 0, 0.45); border-left: 3px solid #f59e0b; padding: 6px 10px; border-radius: 3px; font-size: 0.8rem;">
-                                                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 3px; flex-wrap: wrap; gap: 4px;">
-                                                        <button type="button" class="btn-timestamp-seek" data-filename="${escapeHtml(b.file_name)}" data-seek="${escapeHtml(f.timestamp_start)}" title="Click to seek ${isAud ? 'audio' : 'video'} to ${escapeHtml(f.timestamp_start)}" style="background: rgba(56, 189, 248, 0.2); border: 1px solid #38bdf8; color: #38bdf8; font-family: monospace; font-size: 0.75rem; font-weight: 700; padding: 2px 7px; border-radius: 4px; cursor: pointer;">
-                                                            ⏱️ ${escapeHtml(f.timestamp_start)} - ${escapeHtml(f.timestamp_end)} (${isAud ? 'Seek Audio' : 'Seek Video'})
+                                                <div class="asset-finding-item">
+                                                    <div class="asset-finding-top">
+                                                        <button type="button" class="btn-timestamp-seek" data-filename="${escapeHtml(b.file_name)}" data-seek="${escapeHtml(f.timestamp_start)}" title="Click to seek ${isAud ? 'audio' : 'video'} to ${escapeHtml(f.timestamp_start)}">
+                                                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                                                <circle cx="12" cy="12" r="10"></circle>
+                                                                <polyline points="12 6 12 12 16 14"></polyline>
+                                                            </svg>
+                                                            <span>${escapeHtml(f.timestamp_start)} - ${escapeHtml(f.timestamp_end)} (${isAud ? 'Seek Audio' : 'Seek Video'})</span>
                                                         </button>
-                                                        <span style="font-size: 0.68rem; color: #fde68a; text-transform: uppercase; font-weight: 700;">${escapeHtml(f.category || 'tone')}</span>
+                                                        <span class="asset-finding-category">${escapeHtml(f.category || 'tone')}</span>
                                                     </div>
-                                                    <div style="color: #fca5a5; margin-bottom: 2px;">${escapeHtml(f.description)}</div>
-                                                    ${f.evidence ? `<div style="font-size: 0.74rem; color: #94a3b8; font-style: italic; margin-bottom: 2px;">&ldquo;${escapeHtml(f.evidence)}&rdquo;</div>` : ''}
-                                                    <div style="font-size: 0.76rem; color: #6ee7b7;"><strong>Fix:</strong> ${escapeHtml(f.suggested_fix)}</div>
+                                                    <div class="asset-finding-desc">${escapeHtml(f.description)}</div>
+                                                    ${f.evidence ? `<div class="asset-finding-evidence">&ldquo;${escapeHtml(f.evidence)}&rdquo;</div>` : ''}
+                                                    <div class="asset-finding-fix"><strong>Fix:</strong> ${escapeHtml(f.suggested_fix)}</div>
                                                 </div>
                                             `).join('')}
                                         </div>
@@ -679,11 +759,18 @@ function publish_tab() {
             }
 
             statusBanner.innerHTML = `
-                <div style="display: flex; flex-direction: column; width: 100%;">
-                    <div style="display: flex; align-items: center; justify-content: space-between; width: 100%; flex-wrap: wrap; gap: 8px;">
-                        <div>
-                            <strong>⚠️ ${totalUnresolved} Brand Guideline Deviation(s) Detected:</strong>
-                            <span style="margin-left: 6px;">${instructions.join(' • ')}</span>
+                <div class="banner-notice-inner">
+                    <div class="banner-notice-header">
+                        <div class="banner-notice-title">
+                            <svg class="banner-notice-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"></path>
+                                <line x1="12" y1="9" x2="12" y2="13"></line>
+                                <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                            </svg>
+                            <div>
+                                <strong>${totalUnresolved} Brand Guideline Deviation(s) Detected:</strong>
+                                <span class="banner-notice-instructions">${instructions.join(' • ')}</span>
+                            </div>
                         </div>
                         <span class="tag-badge critical">${totalUnresolved} Unresolved</span>
                     </div>
@@ -774,14 +861,17 @@ function publish_tab() {
     function showTextIssuePopover(anchorSpan, issue) {
         popover.innerHTML = `
             <div class="popover-header">
-                <span class="popover-badge">Guideline Issue</span>
-                <span style="font-size: 0.72rem; color: #94a3b8;">TrueTone Auditor</span>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <span class="popover-badge">Guideline Issue</span>
+                    <span class="popover-rule-id">${escapeHtml(issue.rule_id || 'RULE-TONE')}</span>
+                </div>
+                <span class="popover-auditor-label">TrueTone Auditor</span>
             </div>
             <div class="popover-problem">
                 ${escapeHtml(issue.problem)}
             </div>
             <div class="popover-suggestion-box">
-                <div style="font-size: 0.7rem; color: #6ee7b7; text-transform: uppercase; margin-bottom: 2px;">Suggested Replacement</div>
+                <div class="popover-suggestion-label">Suggested Replacement</div>
                 <strong>${escapeHtml(issue.suggestion)}</strong>
             </div>
             <div class="popover-actions">
@@ -878,18 +968,21 @@ function publish_tab() {
     function showFileIssuePopover(anchorChip, badFile) {
         popover.innerHTML = `
             <div class="popover-header">
-                <span class="popover-badge">Flagged File: ${escapeHtml(badFile.file_name)}</span>
-                <span style="font-size: 0.72rem; color: #94a3b8;">Asset Violation</span>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <span class="popover-badge">Asset Violation</span>
+                    <span class="popover-rule-id">${escapeHtml(badFile.rule_id || 'ASSET-01')}</span>
+                </div>
+                <span class="popover-auditor-label">${escapeHtml(badFile.file_name)}</span>
             </div>
             <div class="popover-problem">
                 ${escapeHtml(badFile.problem)}
             </div>
             <div class="popover-suggestion-box">
-                <div style="font-size: 0.7rem; color: #6ee7b7; text-transform: uppercase; margin-bottom: 2px;">Remedy</div>
+                <div class="popover-suggestion-label">Remedy</div>
                 <strong>${escapeHtml(badFile.suggestion)}</strong>
             </div>
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 4px;">
-                <a href="#" id="btn-popover-preview-file" style="color: #38bdf8; font-size: 0.8rem; text-decoration: none;">🔍 Preview Asset</a>
+            <div class="popover-file-footer">
+                <a href="#" id="btn-popover-preview-file" class="popover-preview-link">🔍 Preview Asset</a>
                 <div class="popover-actions">
                     <button type="button" class="btn-popover-dismiss" id="btn-popover-keep-file">
                         ✕ Keep File
@@ -1024,9 +1117,15 @@ function publish_tab() {
             if (result.route === 'published') {
                 statusBanner.className = 'banner-notice success';
                 statusBanner.innerHTML = `
-                    <div style="font-size: 0.95rem;">
-                        <strong>🎉 Verified & Published!</strong>
-                        <p style="margin-top: 4px; font-size: 0.84rem;">${result.message}</p>
+                    <div class="banner-status-content">
+                        <svg class="banner-status-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                            <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                        </svg>
+                        <div>
+                            <strong>Verified & Published!</strong>
+                            <p class="banner-status-msg">${result.message}</p>
+                        </div>
                     </div>
                 `;
                 if (window.TrueTone) {
@@ -1035,10 +1134,17 @@ function publish_tab() {
             } else {
                 statusBanner.className = 'banner-notice read-only';
                 statusBanner.innerHTML = `
-                    <div style="font-size: 0.95rem;">
-                        <strong>⚠️ Routed to Pending Approval Queue</strong>
-                        <p style="margin-top: 4px; font-size: 0.84rem;">${result.message}</p>
-                        <span style="font-size: 0.78rem; color: #fde68a;">Pending Queue ID: #${result.id} &bull; Log ID: #${result.log_id}</span>
+                    <div class="banner-status-content">
+                        <svg class="banner-status-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"></path>
+                            <line x1="12" y1="9" x2="12" y2="13"></line>
+                            <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                        </svg>
+                        <div>
+                            <strong>Routed to Pending Approval Queue</strong>
+                            <p class="banner-status-msg">${result.message}</p>
+                            <span class="banner-status-meta">Pending Queue ID: #${result.id} &bull; Log ID: #${result.log_id}</span>
+                        </div>
                     </div>
                 `;
                 if (window.TrueTone) {
