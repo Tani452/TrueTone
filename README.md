@@ -321,3 +321,6 @@ Each flagged audio item in `bad_files` produces:
 ### ⚠️ Audio Limitations & Governance
 1. **Accents & Background Noise**: Very heavy acoustic background noise or low-quality microphone audio may affect Gemini transcription precision.
 2. **Human-in-the-Loop**: AI acoustical audits assist creators and editors; final publishing decisions and policy exemptions remain with designated human governance officers.
+
+
+####In the Actions tab the employee data gets updated only after clicking the "Run Weekly AI Analysis" button.
