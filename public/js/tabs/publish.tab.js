@@ -164,7 +164,7 @@ function publish_tab() {
                             <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
                             <code>audio_and_voice_standards.md</code>
                         </span>
-                    </div>
+                    </div>1
                 </div>
                 <span class="publish-target-engine">Target Engine: <code>POST /api/publish-submission</code></span>
             </div>
@@ -474,7 +474,7 @@ function publish_tab() {
             const applySeek = () => {
                 if (seekSeconds > 0) {
                     vid.currentTime = seekSeconds;
-                    vid.play().catch(() => {});
+                    vid.play().catch(() => { });
                 }
             };
 
@@ -494,7 +494,7 @@ function publish_tab() {
             const applySeek = () => {
                 if (seekSeconds > 0) {
                     aud.currentTime = seekSeconds;
-                    aud.play().catch(() => {});
+                    aud.play().catch(() => { });
                 }
             };
 
@@ -681,16 +681,16 @@ function publish_tab() {
                             <span>Detected Violation(s) in Uploaded Files (${unresolvedFiles})</span>
                         </div>
                         ${currentReviewResult.bad_files.map(b => {
-                            const isVid = (b.media_type === 'video') ||
-                                (b.file_name && ['.mp4', '.mov', '.webm', '.mpeg', '.avi'].some(ext => b.file_name.toLowerCase().endsWith(ext)));
-                            const isAud = (b.media_type === 'audio') ||
-                                (b.file_name && ['.mp3', '.wav', '.m4a', '.aac', '.ogg', '.flac'].some(ext => b.file_name.toLowerCase().endsWith(ext)));
-                            const mediaBadge = isVid ? 'VIDEO' : (isAud ? 'AUDIO' : ((b.media_type === 'image') ? 'IMAGE' : 'DOCUMENT'));
-                            const ruleId = b.rule_id || (isVid ? 'VID-01' : (isAud ? 'AUD-01' : 'VIS-01'));
-                            const guideSource = b.guideline_source || (isVid ? 'guidelines/video_and_motion_standards.md' : (isAud ? 'guidelines/audio_and_voice_standards.md' : 'guidelines/visual_and_accessibility_standards.md'));
-                            const findings = Array.isArray(b.findings) ? b.findings : [];
+                    const isVid = (b.media_type === 'video') ||
+                        (b.file_name && ['.mp4', '.mov', '.webm', '.mpeg', '.avi'].some(ext => b.file_name.toLowerCase().endsWith(ext)));
+                    const isAud = (b.media_type === 'audio') ||
+                        (b.file_name && ['.mp3', '.wav', '.m4a', '.aac', '.ogg', '.flac'].some(ext => b.file_name.toLowerCase().endsWith(ext)));
+                    const mediaBadge = isVid ? 'VIDEO' : (isAud ? 'AUDIO' : ((b.media_type === 'image') ? 'IMAGE' : 'DOCUMENT'));
+                    const ruleId = b.rule_id || (isVid ? 'VID-01' : (isAud ? 'AUD-01' : 'VIS-01'));
+                    const guideSource = b.guideline_source || (isVid ? 'guidelines/video_and_motion_standards.md' : (isAud ? 'guidelines/audio_and_voice_standards.md' : 'guidelines/visual_and_accessibility_standards.md'));
+                    const findings = Array.isArray(b.findings) ? b.findings : [];
 
-                            return `
+                    return `
                             <div class="asset-violation-card">
                                 <div class="asset-violation-top">
                                     <div class="asset-violation-meta">
@@ -756,7 +756,7 @@ function publish_tab() {
                                 ` : ''}
                             </div>
                             `;
-                        }).join('')}
+                }).join('')}
                     </div>
                 `;
             }
