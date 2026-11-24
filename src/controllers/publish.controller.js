@@ -88,6 +88,20 @@ exports.createPublishedPost = async (req, res) => {
             });
         }
 
+        // Server-side enforcement: Block direct publishing if post contains unresolved violations or unreviewed video/audio
+        const hasUnresolvedIssues = post.unresolved_issues && (
+            (Array.isArray(post.unresolved_issues.bad_files) && post.unresolved_issues.bad_files.length > 0) ||
+            (Array.isArray(post.unresolved_issues.text) && post.unresolved_issues.text.length > 0)
+        );
+        const hasViolatingFiles = Array.isArray(post.files) && post.files.some(f => f.violations || f.unverified);
+
+        if (hasUnresolvedIssues || hasViolatingFiles) {
+            return res.status(400).json({
+                success: false,
+                error: 'Cannot directly publish content with unresolved brand guideline violations or unreviewed media. Please submit to Pending Review queue.',
+            });
+        }
+
         const result = await db.query(
             'INSERT INTO published (post, timestamp) VALUES ($1, CURRENT_TIMESTAMP) RETURNING *',
             [JSON.stringify(post)]

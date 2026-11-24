@@ -29,16 +29,38 @@ const storage = multer.diskStorage({
     }
 });
 
+const MAX_VIDEO_MB = parseInt(process.env.MAX_VIDEO_MB, 10) || 100;
+const MAX_AUDIO_MB = parseInt(process.env.MAX_AUDIO_MB, 10) || 50;
+const MAX_FILE_SIZE_BYTES = Math.max(MAX_VIDEO_MB, MAX_AUDIO_MB) * 1024 * 1024;
+
 const upload = multer({
     storage,
-    limits: { fileSize: 50 * 1024 * 1024 } // 50MB
+    limits: { fileSize: MAX_FILE_SIZE_BYTES }
 });
+
+function handleSubmissionUpload(req, res, next) {
+    upload.array('files')(req, res, (err) => {
+        if (err) {
+            if (err.code === 'LIMIT_FILE_SIZE') {
+                return res.status(400).json({
+                    success: false,
+                    error: `Attached file exceeds the ${MAX_VIDEO_MB}MB limit.`
+                });
+            }
+            return res.status(400).json({
+                success: false,
+                error: err.message || 'File upload error'
+            });
+        }
+        next();
+    });
+}
 
 /**
  * POST /api/publish-submission
  * Final post submission with transaction-safe PostgreSQL routing
  */
-router.post('/', upload.array('files'), async (req, res) => {
+router.post('/', handleSubmissionUpload, async (req, res) => {
     try {
         const userId = parseInt(req.body.user_id, 10) || 1;
         const finalText = req.body.final_text || '';
@@ -55,13 +77,26 @@ router.post('/', upload.array('files'), async (req, res) => {
         }
 
         const files = req.files || [];
-        const savedFiles = files.map(f => ({
-            original_name: f.originalname,
-            stored_name: f.filename,
-            url: `/uploads/${f.filename}`,
-            mime_type: f.mimetype,
-            size: f.size,
-        }));
+        const savedFiles = files.map(f => {
+            const ext = path.extname(f.originalname || '').toLowerCase();
+            const mime = (f.mimetype || '').toLowerCase();
+            let mediaType = 'document';
+            if (mime.startsWith('audio/') || ['.mp3', '.wav', '.m4a', '.aac', '.ogg', '.flac'].includes(ext)) {
+                mediaType = 'audio';
+            } else if (mime.startsWith('video/') || ['.mp4', '.mov', '.webm', '.mpeg', '.avi'].includes(ext)) {
+                mediaType = 'video';
+            } else if (mime.startsWith('image/') || ['.png', '.jpg', '.jpeg', '.gif', '.webp', '.svg'].includes(ext)) {
+                mediaType = 'image';
+            }
+            return {
+                original_name: f.originalname,
+                stored_name: f.filename,
+                url: `/uploads/${f.filename}`,
+                mime_type: f.mimetype,
+                size: f.size,
+                media_type: mediaType,
+            };
+        });
 
         // Determine if there are unresolved AI flags
         const hasTextIssues = remainingProblems && Array.isArray(remainingProblems.text) && remainingProblems.text.length > 0;
@@ -100,7 +135,17 @@ router.post('/', upload.array('files'), async (req, res) => {
         // Execute PostgreSQL transaction
         const txResult = await db.withTransaction(async (client) => {
             // Step A: Always insert into logs table
-            const logIssueValue = hasRemainingIssues ? remainingProblems : null;
+            let logIssueValue = null;
+            if (hasRemainingIssues) {
+                const hasVideoViolation = remainingProblems.bad_files && remainingProblems.bad_files.some(b => b.media_type === 'video');
+                const hasAudioViolation = remainingProblems.bad_files && remainingProblems.bad_files.some(b => b.media_type === 'audio');
+                logIssueValue = {
+                    ...remainingProblems,
+                    category: remainingProblems.category || (hasAudioViolation ? 'audio_standards' : (hasVideoViolation ? 'video_standards' : (hasBadFiles ? 'asset_deviation' : 'tone_violation'))),
+                    severity: remainingProblems.severity || 'HIGH',
+                };
+            }
+
             const logRes = await client.query(
                 `INSERT INTO logs (post, published_by, issue)
                  VALUES ($1::jsonb, $2, $3::jsonb)

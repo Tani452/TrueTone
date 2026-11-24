@@ -34,7 +34,7 @@ function publish_tab() {
         designation: 'Staff'
     };
 
-    // 3. Render Compose Workspace DOM Structure
+    // 3. Render Compose Workspace DOM Structure1
     const composerWrapper = document.createElement('div');
     composerWrapper.className = 'composer-wrapper tab-viewport';
     composerWrapper.id = 'publish-composer-viewport';
@@ -83,6 +83,14 @@ function publish_tab() {
                             <span>🖼️</span>
                             <span>Image</span>
                         </button>
+                        <button type="button" class="dropdown-item" id="btn-attach-vid">
+                            <span>🎥</span>
+                            <span>Video</span>
+                        </button>
+                        <button type="button" class="dropdown-item" id="btn-attach-aud">
+                            <span>🎵</span>
+                            <span>Audio</span>
+                        </button>
                     </div>
                 </div>
 
@@ -98,10 +106,16 @@ function publish_tab() {
             </div>
         </div>
 
-        <!-- Live Guideline Reference Footnote -->
-        <div style="margin-top: 18px; display: flex; justify-content: space-between; align-items: center; font-size: 0.76rem; color: var(--text-muted);">
-            <span>Enforcing: <code>brand_voice_and_tone.md</code> &bull; <code>approved_facts_and_claims.txt</code> &bull; <code>visual_and_accessibility_standards.md</code></span>
-            <span>Target Engine: <code>POST /api/publish-submission</code></span>
+        <!-- Live Guideline Reference Footnote & AI Disclosure -->
+        <div style="margin-top: 14px; display: flex; flex-direction: column; gap: 6px; font-size: 0.76rem; color: var(--text-muted);">
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+                <span>Enforcing: <code>brand_voice_and_tone.md</code> &bull; <code>approved_facts_and_claims.txt</code> &bull; <code>visual_and_accessibility_standards.md</code> &bull; <code>video_and_motion_standards.md</code> &bull; <code>audio_and_voice_standards.md</code></span>
+                <span>Target Engine: <code>POST /api/publish-submission</code></span>
+            </div>
+            <div style="color: #64748b; font-size: 0.72rem; display: flex; align-items: center; gap: 6px;">
+                <span>🛡️ AI-Reviewed Disclosure:</span>
+                <span>Media and attachments are sent to Google Gemini for multimodal compliance audit (max 100MB video, 50MB audio). Files are never stored by TrueTone beyond the review.</span>
+            </div>
         </div>
     `;
 
@@ -188,12 +202,44 @@ function publish_tab() {
                 return validMimes.includes(mime) || validExts.some(ext => name.endsWith(ext));
             };
         } else if (filetype === 'image') {
-            input.accept = 'image/png,image/jpeg,image/jpg,image/webp,image/gif';
+            input.accept = 'image/png,image/jpeg,image/jpg,image/webp,image/gif,image/svg+xml';
             validator = (file) => {
                 const mime = (file.type || '').toLowerCase();
                 const name = (file.name || '').toLowerCase();
-                const validExts = ['.png', '.jpg', '.jpeg', '.webp', '.gif'];
-                return mime.startsWith('image/') && validExts.some(ext => name.endsWith(ext));
+                const validExts = ['.png', '.jpg', '.jpeg', '.webp', '.gif', '.svg'];
+                return (mime.startsWith('image/') || validExts.some(ext => name.endsWith(ext)));
+            };
+        } else if (filetype === 'video') {
+            input.accept = 'video/mp4,video/quicktime,video/webm,video/mpeg,video/x-msvideo,.mp4,.mov,.webm,.mpeg,.avi';
+            validator = (file) => {
+                const mime = (file.type || '').toLowerCase();
+                const name = (file.name || '').toLowerCase();
+                const validExts = ['.mp4', '.mov', '.webm', '.mpeg', '.avi'];
+                const validMimes = ['video/mp4', 'video/quicktime', 'video/webm', 'video/mpeg', 'video/x-msvideo', 'video/avi'];
+                const isVid = (mime.startsWith('video/') || validMimes.includes(mime) || validExts.some(ext => name.endsWith(ext)));
+                if (!isVid) return false;
+                const maxMB = 100;
+                if (file.size > maxMB * 1024 * 1024) {
+                    if (window.TrueTone) window.TrueTone.showToast(`Video "${file.name}" exceeds ${maxMB}MB limit (${formatBytes(file.size)})`, 'error');
+                    return false;
+                }
+                return true;
+            };
+        } else if (filetype === 'audio') {
+            input.accept = 'audio/mpeg,audio/wav,audio/x-wav,audio/mp4,audio/x-m4a,audio/aac,audio/ogg,audio/flac,audio/webm,.mp3,.wav,.m4a,.aac,.ogg,.flac';
+            validator = (file) => {
+                const mime = (file.type || '').toLowerCase();
+                const name = (file.name || '').toLowerCase();
+                const validExts = ['.mp3', '.wav', '.m4a', '.aac', '.ogg', '.flac'];
+                const validMimes = ['audio/mpeg', 'audio/mp3', 'audio/wav', 'audio/x-wav', 'audio/mp4', 'audio/x-m4a', 'audio/aac', 'audio/ogg', 'audio/flac', 'audio/webm'];
+                const isAud = (mime.startsWith('audio/') || validMimes.includes(mime) || validExts.some(ext => name.endsWith(ext)));
+                if (!isAud) return false;
+                const maxMB = 50;
+                if (file.size > maxMB * 1024 * 1024) {
+                    if (window.TrueTone) window.TrueTone.showToast(`Audio "${file.name}" exceeds ${maxMB}MB limit (${formatBytes(file.size)})`, 'error');
+                    return false;
+                }
+                return true;
             };
         } else {
             console.warn('[FILES] Unknown filetype:', filetype);
@@ -231,6 +277,8 @@ function publish_tab() {
     // Attach click listeners to dropdown items
     document.getElementById('btn-attach-doc').onclick = () => files('document');
     document.getElementById('btn-attach-img').onclick = () => files('image');
+    document.getElementById('btn-attach-vid').onclick = () => files('video');
+    document.getElementById('btn-attach-aud').onclick = () => files('audio');
 
     // show_files()
     function show_files() {
@@ -256,11 +304,26 @@ function publish_tab() {
             const thumbBox = document.createElement('div');
             thumbBox.className = 'tt-thumb-box';
 
+            const isVideo = (file.type && file.type.startsWith('video/')) ||
+                ['.mp4', '.mov', '.webm', '.mpeg', '.avi'].some(ext => file.name.toLowerCase().endsWith(ext));
+            const isAudio = (file.type && file.type.startsWith('audio/')) ||
+                ['.mp3', '.wav', '.m4a', '.aac', '.ogg', '.flac'].some(ext => file.name.toLowerCase().endsWith(ext));
+
             if (file.type && file.type.startsWith('image/')) {
                 const thumbImg = document.createElement('img');
                 thumbImg.src = URL.createObjectURL(file);
                 thumbImg.onload = () => URL.revokeObjectURL(thumbImg.src);
                 thumbBox.appendChild(thumbImg);
+            } else if (isVideo) {
+                const videoThumb = document.createElement('video');
+                videoThumb.src = URL.createObjectURL(file);
+                videoThumb.muted = true;
+                videoThumb.controls = true;
+                videoThumb.preload = 'metadata';
+                videoThumb.style.cssText = 'width: 100%; height: 100%; object-fit: cover; border-radius: 4px;';
+                thumbBox.appendChild(videoThumb);
+            } else if (isAudio) {
+                thumbBox.innerHTML = `<span style="font-size: 1.4rem;">🎵</span>`;
             } else {
                 const ext = file.name.split('.').pop().toUpperCase();
                 thumbBox.innerHTML = `<span class="doc-type-icon">${escapeHtml(ext.substring(0, 4))}</span>`;
@@ -272,6 +335,7 @@ function publish_tab() {
             infoBox.innerHTML = `
                 <span class="tt-chip-name" title="${escapeHtml(file.name)}">${escapeHtml(file.name)}</span>
                 <span class="tt-chip-size">${formatBytes(file.size)}</span>
+                ${isAudio ? `<audio controls preload="metadata" src="${URL.createObjectURL(file)}" style="height: 24px; width: 100%; max-width: 140px; margin-top: 3px;" onclick="event.stopPropagation();"></audio>` : ''}
             `;
 
             // Remove button
@@ -311,7 +375,7 @@ function publish_tab() {
         }
     }
 
-    function openFilePreviewModal(file) {
+    function openFilePreviewModal(file, seekSeconds = 0) {
         if (activeBlobUrl) {
             URL.revokeObjectURL(activeBlobUrl);
         }
@@ -325,10 +389,56 @@ function publish_tab() {
         extLink.href = activeBlobUrl;
 
         bodyEl.innerHTML = '';
+        const isVideo = (file.type && file.type.startsWith('video/')) ||
+            ['.mp4', '.mov', '.webm', '.mpeg', '.avi'].some(ext => file.name.toLowerCase().endsWith(ext));
+        const isAudio = (file.type && file.type.startsWith('audio/')) ||
+            ['.mp3', '.wav', '.m4a', '.aac', '.ogg', '.flac'].some(ext => file.name.toLowerCase().endsWith(ext));
+
         if (file.type && file.type.startsWith('image/')) {
             const img = document.createElement('img');
             img.src = activeBlobUrl;
             bodyEl.appendChild(img);
+        } else if (isVideo) {
+            const vid = document.createElement('video');
+            vid.id = 'tt-modal-active-video';
+            vid.src = activeBlobUrl;
+            vid.controls = true;
+            vid.autoplay = true;
+            vid.muted = false;
+            vid.style.cssText = 'max-width: 100%; max-height: 65vh; border-radius: 6px; box-shadow: 0 4px 16px rgba(0,0,0,0.6);';
+            bodyEl.appendChild(vid);
+
+            const applySeek = () => {
+                if (seekSeconds > 0) {
+                    vid.currentTime = seekSeconds;
+                    vid.play().catch(() => {});
+                }
+            };
+
+            vid.onloadedmetadata = applySeek;
+            if (vid.readyState >= 1) {
+                applySeek();
+            }
+        } else if (isAudio) {
+            const aud = document.createElement('audio');
+            aud.id = 'tt-modal-active-audio';
+            aud.src = activeBlobUrl;
+            aud.controls = true;
+            aud.autoplay = true;
+            aud.style.cssText = 'width: 100%; max-width: 500px; margin: 30px auto; display: block;';
+            bodyEl.appendChild(aud);
+
+            const applySeek = () => {
+                if (seekSeconds > 0) {
+                    aud.currentTime = seekSeconds;
+                    aud.play().catch(() => {});
+                }
+            };
+
+            aud.onloadedmetadata = applySeek;
+            if (aud.readyState >= 1) {
+                applySeek();
+            }
         } else if (file.type === 'application/pdf') {
             const iframe = document.createElement('iframe');
             iframe.src = activeBlobUrl;
@@ -384,8 +494,17 @@ function publish_tab() {
     // =========================================================================
 
     async function review(object) {
+        const hasVideo = (object.files || []).some(f => (f.type && f.type.startsWith('video/')) || ['.mp4', '.mov', '.webm', '.mpeg', '.avi'].some(ext => (f.name || '').toLowerCase().endsWith(ext)));
+        const hasAudio = (object.files || []).some(f => (f.type && f.type.startsWith('audio/')) || ['.mp3', '.wav', '.m4a', '.aac', '.ogg', '.flac'].some(ext => (f.name || '').toLowerCase().endsWith(ext)));
+
         reviewBtn.disabled = true;
-        reviewBtn.innerHTML = '⏳ Scanning against brand guidelines...';
+        if (hasAudio) {
+            reviewBtn.innerHTML = '⏳ Analysing audio voice, pronunciation & acoustics... (this can take a little longer)';
+        } else if (hasVideo) {
+            reviewBtn.innerHTML = '⏳ Analysing video frames, audio & motion... (this can take a little longer)';
+        } else {
+            reviewBtn.innerHTML = '⏳ Scanning against brand guidelines...';
+        }
 
         const statusBanner = document.getElementById('publish-status-banner');
         statusBanner.style.display = 'none';
@@ -491,27 +610,70 @@ function publish_tab() {
                             <span>🚨</span>
                             <span>Detected Violation(s) in Uploaded Files (${unresolvedFiles})</span>
                         </div>
-                        ${currentReviewResult.bad_files.map(b => `
-                            <div style="background: rgba(8, 14, 28, 0.85); border: 1px solid rgba(255, 82, 119, 0.4); border-radius: 6px; padding: 12px 14px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);">
+                        ${currentReviewResult.bad_files.map(b => {
+                            const isVid = (b.media_type === 'video') ||
+                                (b.file_name && ['.mp4', '.mov', '.webm', '.mpeg', '.avi'].some(ext => b.file_name.toLowerCase().endsWith(ext)));
+                            const isAud = (b.media_type === 'audio') ||
+                                (b.file_name && ['.mp3', '.wav', '.m4a', '.aac', '.ogg', '.flac'].some(ext => b.file_name.toLowerCase().endsWith(ext)));
+                            const mediaBadge = isVid ? '🎥 VIDEO' : (isAud ? '🎵 AUDIO' : ((b.media_type === 'image') ? '🖼️ IMAGE' : '📄 DOCUMENT'));
+                            const ruleId = b.rule_id || (isVid ? 'VID-01' : (isAud ? 'AUD-01' : 'VIS-01'));
+                            const guideSource = b.guideline_source || (isVid ? 'guidelines/video_and_motion_standards.md' : (isAud ? 'guidelines/audio_and_voice_standards.md' : 'guidelines/visual_and_accessibility_standards.md'));
+                            const findings = Array.isArray(b.findings) ? b.findings : [];
+
+                            return `
+                            <div class="asset-violation-card" style="background: rgba(8, 14, 28, 0.85); border: 1px solid rgba(255, 82, 119, 0.4); border-radius: 6px; padding: 12px 14px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);">
                                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; flex-wrap: wrap; gap: 6px;">
-                                    <span style="font-weight: 700; color: #f8fafc; font-size: 0.9rem; display: flex; align-items: center; gap: 6px;">
-                                        <span>📄</span>
+                                    <div style="font-weight: 700; color: #f8fafc; font-size: 0.9rem; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                                        <span style="font-size: 0.72rem; color: #38bdf8; background: rgba(56, 189, 248, 0.15); border: 1px solid #38bdf8; padding: 2px 7px; border-radius: 4px; font-weight: 700;">${mediaBadge}</span>
+                                        <span style="font-size: 0.72rem; color: #f59e0b; background: rgba(245, 158, 11, 0.15); border: 1px solid #f59e0b; padding: 2px 7px; border-radius: 4px; font-weight: 700; font-family: monospace;">${escapeHtml(ruleId)}</span>
                                         <span>${escapeHtml(b.file_name)}</span>
-                                    </span>
+                                    </div>
                                     <div style="display: flex; gap: 8px; align-items: center;">
                                         <span style="font-size: 0.72rem; color: #ff5277; background: rgba(255, 82, 119, 0.15); border: 1px solid #ff5277; padding: 2px 8px; border-radius: 4px; font-weight: 700; text-transform: uppercase;">Flagged Violation</span>
                                         <button type="button" class="btn-remove-bad-file" data-filename="${escapeHtml(b.file_name)}" style="background: rgba(255, 82, 119, 0.2); border: 1px solid #ff5277; color: #ff8fa3; padding: 3px 10px; border-radius: 4px; font-size: 0.76rem; cursor: pointer; font-weight: 600;">🗑️ Remove File</button>
                                     </div>
                                 </div>
+                                <div style="font-size: 0.74rem; color: var(--text-muted); margin-bottom: 8px;">
+                                    Guideline Source: <code style="color: #93c5fd;">${escapeHtml(guideSource)}</code>
+                                </div>
                                 <div style="margin-bottom: 8px; font-size: 0.86rem; line-height: 1.4; color: #fca5a5;">
                                     <strong style="color: #ff6b81;">Violation:</strong> ${escapeHtml(b.problem)}
                                 </div>
-                                <div style="background: rgba(6, 182, 212, 0.09); border-left: 3px solid #06b6d4; padding: 8px 12px; border-radius: 4px; font-size: 0.83rem; line-height: 1.4; color: #e2e8f0;">
+                                <div style="background: rgba(6, 182, 212, 0.09); border-left: 3px solid #06b6d4; padding: 8px 12px; border-radius: 4px; font-size: 0.83rem; line-height: 1.4; color: #e2e8f0; margin-bottom: 8px;">
                                     <div style="font-size: 0.7rem; color: #38bdf8; font-weight: 700; text-transform: uppercase; margin-bottom: 2px; letter-spacing: 0.05em;">Recommended Remedy</div>
                                     <span>${escapeHtml(b.suggestion)}</span>
                                 </div>
+                                ${b.transcript ? `
+                                    <details style="margin-top: 8px; margin-bottom: 8px; border-top: 1px dashed rgba(255,255,255,0.1); padding-top: 6px;">
+                                        <summary style="cursor: pointer; font-size: 0.76rem; color: #38bdf8; font-weight: 600;">📝 Spoken Transcript</summary>
+                                        <div style="font-size: 0.78rem; color: #cbd5e1; margin-top: 4px; padding: 6px 10px; background: rgba(0,0,0,0.35); border-radius: 4px; white-space: pre-wrap; font-family: inherit;">${escapeHtml(b.transcript)}</div>
+                                    </details>
+                                ` : ''}
+                                ${findings.length > 0 ? `
+                                    <div style="margin-top: 10px; border-top: 1px solid rgba(255, 255, 255, 0.1); padding-top: 8px;">
+                                        <div style="font-size: 0.74rem; color: #94a3b8; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px;">
+                                            ⏱️ Timestamped Findings (${findings.length})
+                                        </div>
+                                        <div style="display: flex; flex-direction: column; gap: 6px;">
+                                            ${findings.map(f => `
+                                                <div style="background: rgba(0, 0, 0, 0.45); border-left: 3px solid #f59e0b; padding: 6px 10px; border-radius: 3px; font-size: 0.8rem;">
+                                                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 3px; flex-wrap: wrap; gap: 4px;">
+                                                        <button type="button" class="btn-timestamp-seek" data-filename="${escapeHtml(b.file_name)}" data-seek="${escapeHtml(f.timestamp_start)}" title="Click to seek ${isAud ? 'audio' : 'video'} to ${escapeHtml(f.timestamp_start)}" style="background: rgba(56, 189, 248, 0.2); border: 1px solid #38bdf8; color: #38bdf8; font-family: monospace; font-size: 0.75rem; font-weight: 700; padding: 2px 7px; border-radius: 4px; cursor: pointer;">
+                                                            ⏱️ ${escapeHtml(f.timestamp_start)} - ${escapeHtml(f.timestamp_end)} (${isAud ? 'Seek Audio' : 'Seek Video'})
+                                                        </button>
+                                                        <span style="font-size: 0.68rem; color: #fde68a; text-transform: uppercase; font-weight: 700;">${escapeHtml(f.category || 'tone')}</span>
+                                                    </div>
+                                                    <div style="color: #fca5a5; margin-bottom: 2px;">${escapeHtml(f.description)}</div>
+                                                    ${f.evidence ? `<div style="font-size: 0.74rem; color: #94a3b8; font-style: italic; margin-bottom: 2px;">&ldquo;${escapeHtml(f.evidence)}&rdquo;</div>` : ''}
+                                                    <div style="font-size: 0.76rem; color: #6ee7b7;"><strong>Fix:</strong> ${escapeHtml(f.suggested_fix)}</div>
+                                                </div>
+                                            `).join('')}
+                                        </div>
+                                    </div>
+                                ` : ''}
                             </div>
-                        `).join('')}
+                            `;
+                        }).join('')}
                     </div>
                 `;
             }
@@ -539,6 +701,27 @@ function publish_tab() {
                     display_problematic_files(currentReviewResult);
                     checkIfAllIssuesResolved();
                     if (window.TrueTone) window.TrueTone.showToast(`Removed flagged file: ${fn}`, "success");
+                };
+            });
+
+            // Attach click listeners to timestamp seek buttons
+            statusBanner.querySelectorAll('.btn-timestamp-seek').forEach(seekBtn => {
+                seekBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    const filename = seekBtn.dataset.filename;
+                    const timeStr = seekBtn.dataset.seek;
+                    const matchedFile = file_array.find(f => f.name === filename);
+                    if (!matchedFile) return;
+
+                    let seconds = 0;
+                    if (timeStr && timeStr.includes(':')) {
+                        const [m, s] = timeStr.split(':').map(Number);
+                        seconds = (m || 0) * 60 + (s || 0);
+                    } else {
+                        seconds = parseFloat(timeStr) || 0;
+                    }
+
+                    openFilePreviewModal(matchedFile, seconds);
                 };
             });
 
@@ -800,10 +983,14 @@ function publish_tab() {
                     problem,
                     suggestion
                 })),
-                bad_files: currentReviewResult.bad_files.map(({ file_name, problem, suggestion }) => ({
+                bad_files: currentReviewResult.bad_files.map(({ file_name, problem, suggestion, media_type, rule_id, guideline_source, findings }) => ({
                     file_name,
                     problem,
-                    suggestion
+                    suggestion,
+                    media_type,
+                    rule_id,
+                    guideline_source,
+                    findings
                 })),
                 good_files: currentReviewResult.good_files
             };

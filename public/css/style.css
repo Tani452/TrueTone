@@ -1524,6 +1524,18 @@ tr:hover td {
     color: var(--neon-crimson);
 }
 
+.btn-timestamp-seek {
+    transition: all 0.2s ease;
+}
+
+.btn-timestamp-seek:hover {
+    background: rgba(56, 189, 248, 0.4) !important;
+    border-color: #38bdf8 !important;
+    color: #ffffff !important;
+    transform: translateY(-1px);
+    box-shadow: 0 0 8px rgba(56, 189, 248, 0.5);
+}
+
 /* Bottom Action Toolbar */
 #compose-toolbar {
     display: flex;

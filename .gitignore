@@ -1,3 +1,4 @@
+node_modules/
 .env
 generate_*.js
 scratch_*.js

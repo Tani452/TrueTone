@@ -1,4 +1,4 @@
-APPROVED FACT SHEET & MANDATES
+# Approved Facts and Claims & Mandates
 
 1. Infrastructure: Powered by certified renewable cloud inference nodes as of Q3 2026.
 2. Latency Benchmarks: Verified sub-10ms query execution across PostgreSQL GIN indexing.

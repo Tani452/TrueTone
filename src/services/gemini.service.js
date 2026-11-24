@@ -6,15 +6,17 @@
 
 const { GoogleGenAI } = require('@google/genai');
 const { loadGuidelinesContext } = require('./guidelines.service');
+const os = require('os');
+const path = require('path');
+const fs = require('fs');
 
-// Candidate model tiers with automatic fallback
-const CANDIDATE_MODELS = [
+// Candidate model tiers with automatic fallback across healthy active models
+const CANDIDATE_MODELS = Array.from(new Set([
     process.env.GEMINI_MODEL,
-    'gemini-3.1-flash-lite',
-    'gemini-3.5-flash',
-    'gemini-3.8-flash',
-    'gemini-2.5-flash'
-].filter(Boolean);
+    'gemini-3.5-flash-lite',
+    'gemini-3.6-flash',
+    'gemini-3.5-flash'
+].filter(Boolean)));
 
 /**
  * Executes a Gemini content generation call with automatic fallback across supported model tiers.
@@ -58,7 +60,26 @@ const REVIEW_SCHEMA = {
                 properties: {
                     file_name: { type: "STRING" },
                     problem: { type: "STRING" },
-                    suggestion: { type: "STRING" }
+                    suggestion: { type: "STRING" },
+                    media_type: { type: "STRING", enum: ["document", "image", "video", "audio"] },
+                    rule_id: { type: "STRING" },
+                    guideline_source: { type: "STRING" },
+                    transcript: { type: "STRING" },
+                    findings: {
+                        type: "ARRAY",
+                        items: {
+                            type: "OBJECT",
+                            properties: {
+                                timestamp_start: { type: "STRING" },
+                                timestamp_end: { type: "STRING" },
+                                category: { type: "STRING", enum: ["tone", "claim", "naming", "compliance", "confidentiality", "accessibility", "quality", "licensing", "language", "format", "visual"] },
+                                description: { type: "STRING" },
+                                evidence: { type: "STRING" },
+                                suggested_fix: { type: "STRING" }
+                            },
+                            required: ["timestamp_start", "timestamp_end", "category", "description", "evidence", "suggested_fix"]
+                        }
+                    }
                 },
                 required: ["file_name", "problem", "suggestion"]
             }
@@ -114,6 +135,48 @@ const CUMULATIVE_REPORT_SCHEMA = {
     required: ["status", "summary_headline", "detailed_analysis", "recurring_issues", "recommended_actions", "stats"]
 };
 
+// Helper functions for file classification
+function isVideoFile(file) {
+    if (!file) return false;
+    const mime = (file.mimetype || file.type || '').toLowerCase();
+    const name = (file.originalname || file.name || '').toLowerCase();
+    const videoExts = ['.mp4', '.mov', '.webm', '.mpeg', '.avi'];
+    return mime.startsWith('video/') || (videoExts.some(ext => name.endsWith(ext)) && !mime.startsWith('audio/'));
+}
+
+function normalizeVideoMime(file) {
+    const mime = (file.mimetype || file.type || '').toLowerCase();
+    const name = (file.originalname || file.name || '').toLowerCase();
+    if (mime.includes('quicktime') || name.endsWith('.mov')) return 'video/quicktime';
+    if (mime.includes('webm') || name.endsWith('.webm')) return 'video/webm';
+    if (mime.includes('mpeg') || name.endsWith('.mpeg')) return 'video/mpeg';
+    if (mime.includes('avi') || mime.includes('msvideo') || name.endsWith('.avi')) return 'video/x-msvideo';
+    return 'video/mp4';
+}
+
+function isAudioFile(file) {
+    if (!file) return false;
+    const mime = (file.mimetype || file.type || '').toLowerCase();
+    const name = (file.originalname || file.name || '').toLowerCase();
+    const audioExts = ['.mp3', '.wav', '.m4a', '.aac', '.ogg', '.flac'];
+    if (mime.startsWith('audio/')) return true;
+    if (audioExts.some(ext => name.endsWith(ext))) return true;
+    if (name.endsWith('.webm') && mime.includes('audio')) return true;
+    return false;
+}
+
+function normalizeAudioMime(file) {
+    const mime = (file.mimetype || file.type || '').toLowerCase();
+    const name = (file.originalname || file.name || '').toLowerCase();
+    if (mime.includes('wav') || name.endsWith('.wav')) return 'audio/wav';
+    if (mime.includes('x-m4a') || mime.includes('m4a') || name.endsWith('.m4a')) return 'audio/x-m4a';
+    if (mime.includes('aac') || name.endsWith('.aac')) return 'audio/aac';
+    if (mime.includes('ogg') || name.endsWith('.ogg')) return 'audio/ogg';
+    if (mime.includes('flac') || name.endsWith('.flac')) return 'audio/flac';
+    if (mime.includes('webm') || name.endsWith('.webm')) return 'audio/webm';
+    return 'audio/mpeg';
+}
+
 /**
  * Perform multimodal brand guideline audit using Gemini 2.5 Flash
  */
@@ -122,11 +185,13 @@ async function auditContentWithGemini(text = '', files = []) {
     const apiKey = process.env.GEMINI_API_KEY;
 
     if (apiKey) {
+        const uploadedFilesToCleanup = [];
+        const tempFilesToCleanup = [];
         try {
             const ai = new GoogleGenAI({ apiKey });
 
             const systemInstruction = `You are TrueTone's Enterprise Brand Governance Auditor.
-Your responsibility is to strictly cross-reference the user's input text and all uploaded files against the official organizational guidelines provided below.
+Your responsibility is to strictly cross-reference the user's input text and all uploaded files (documents, images, videos, and audio) against the official organizational guidelines provided below.
 
 OFFICIAL GUIDELINES:
 ${consolidatedText}
@@ -135,8 +200,25 @@ AUDIT RULES:
 1. Identify all tone violations, unverified absolute claims, prohibited urgency phrases, branding discrepancies, grammatical errors, and missing statutory disclaimers.
 2. For text issues, 'problem_in' MUST be an EXACT character-for-character substring copied verbatim from the user's input text so that the UI can highlight it accurately.
 3. 'suggestion' must fix the violation while preserving the creator's intended messaging.
-4. For uploaded files, inspect each file against visual and accessibility standards. Classify each file into either 'bad_files' (with exact file_name, problem, and suggestion) or 'good_files'.
-5. Return ONLY a valid JSON object matching the required schema.`;
+4. For uploaded files (documents, images, videos, and audio), inspect each file against visual, accessibility, motion, and acoustic standards:
+   - For images and PDFs: classify into 'bad_files' (with exact file_name, problem, suggestion, media_type: "image" or "document") or 'good_files'.
+   - For videos: analyze video frames, spoken audio narration (transcribe and verify), and on-screen text/lower-thirds against 'guidelines/video_and_motion_standards.md' (rules VID-01 through VID-09) and 'approved_facts_and_claims.txt'.
+   - For audio: listen attentively to speech, narration, audio quality, and background tracks against 'guidelines/audio_and_voice_standards.md' (rules AUD-01 through AUD-10) and 'approved_facts_and_claims.txt'. Verify brand voice, claims, pronunciation of "TrueTone", statutory Safe Harbor disclaimers, confidentiality, background noise, clipping/distortion, unlicensed audio, and duration.
+   - For audio files, always provide a concise textual transcription in 'transcript' for reviewer reference and AUD-06 compliance.
+   - For each video or audio violation in 'bad_files':
+     * set 'media_type' to "video" or "audio"
+     * cite the specific rule ID in 'rule_id' (e.g. "VID-01".."VID-09" or "AUD-01".."AUD-10")
+     * set 'guideline_source' to the corresponding guideline file ("guidelines/video_and_motion_standards.md" or "guidelines/audio_and_voice_standards.md")
+     * populate 'findings' array with objects containing exact timestamp ranges:
+       - 'timestamp_start' (format "MM:SS", e.g. "00:05")
+       - 'timestamp_end' (format "MM:SS", e.g. "00:12")
+       - 'category' ("tone" | "claim" | "naming" | "compliance" | "confidentiality" | "accessibility" | "quality" | "licensing" | "language" | "format" | "visual")
+       - 'description': clear explanation of what violated the rule
+       - 'evidence': exact quote of what was heard or brief description of sound/frame issue
+       - 'suggested_fix': actionable remedy that preserves creator intent (e.g. corrected script wording)
+   - Avoid inventing violations: only flag what is clearly supported by the guidelines or approved facts. When uncertain, mark severity as 'needs_human_review' instead of failing it.
+5. If a file has no violations, include its exact file_name in 'good_files'.
+6. Return ONLY a valid JSON object matching the required schema.`;
 
             const contents = [];
             if (text && text.trim().length > 0) {
@@ -145,7 +227,91 @@ AUDIT RULES:
 
             for (const file of files) {
                 const mimeType = file.mimetype || 'application/octet-stream';
-                if (mimeType.startsWith('image/') || mimeType === 'application/pdf') {
+                if (isAudioFile(file)) {
+                    contents.push({ text: `Attached Audio [${file.originalname}]:` });
+                    const audioMime = normalizeAudioMime(file);
+                    // Inline base64 for small audio <= 15MB
+                    if (file.buffer && file.buffer.length <= 15 * 1024 * 1024) {
+                        contents.push({
+                            inlineData: {
+                                data: file.buffer.toString('base64'),
+                                mimeType: audioMime,
+                            }
+                        });
+                    } else {
+                        // Gemini Files API for audio > 15MB
+                        const tempPath = path.join(os.tmpdir(), `tt-audio-${Date.now()}-${Math.round(Math.random() * 1e6)}${path.extname(file.originalname) || '.mp3'}`);
+                        fs.writeFileSync(tempPath, file.buffer);
+                        tempFilesToCleanup.push(tempPath);
+
+                        const uploadResult = await ai.files.upload({
+                            file: tempPath,
+                            config: { mimeType: audioMime, displayName: file.originalname }
+                        });
+                        uploadedFilesToCleanup.push(uploadResult);
+
+                        // Poll until file is ACTIVE
+                        let fileInfo = await ai.files.get({ name: uploadResult.name });
+                        let pollCount = 0;
+                        while (fileInfo.state === 'PROCESSING' && pollCount < 40) {
+                            await new Promise(r => setTimeout(r, 2000));
+                            fileInfo = await ai.files.get({ name: uploadResult.name });
+                            pollCount++;
+                        }
+                        if (fileInfo.state !== 'ACTIVE') {
+                            throw new Error(`Gemini Files API audio processing failed with state: ${fileInfo.state}`);
+                        }
+
+                        contents.push({
+                            fileData: {
+                                fileUri: fileInfo.uri,
+                                mimeType: fileInfo.mimeType || audioMime,
+                            }
+                        });
+                    }
+                } else if (isVideoFile(file)) {
+                    contents.push({ text: `Attached Video [${file.originalname}]:` });
+                    const videoMime = normalizeVideoMime(file);
+                    // Inline base64 for small videos <= 15MB
+                    if (file.buffer && file.buffer.length <= 15 * 1024 * 1024) {
+                        contents.push({
+                            inlineData: {
+                                data: file.buffer.toString('base64'),
+                                mimeType: videoMime,
+                            }
+                        });
+                    } else {
+                        // Gemini Files API for videos > 15MB
+                        const tempPath = path.join(os.tmpdir(), `tt-video-${Date.now()}-${Math.round(Math.random() * 1e6)}${path.extname(file.originalname) || '.mp4'}`);
+                        fs.writeFileSync(tempPath, file.buffer);
+                        tempFilesToCleanup.push(tempPath);
+
+                        const uploadResult = await ai.files.upload({
+                            file: tempPath,
+                            config: { mimeType: videoMime, displayName: file.originalname }
+                        });
+                        uploadedFilesToCleanup.push(uploadResult);
+
+                        // Poll until file is ACTIVE
+                        let fileInfo = await ai.files.get({ name: uploadResult.name });
+                        let pollCount = 0;
+                        while (fileInfo.state === 'PROCESSING' && pollCount < 40) {
+                            await new Promise(r => setTimeout(r, 2000));
+                            fileInfo = await ai.files.get({ name: uploadResult.name });
+                            pollCount++;
+                        }
+                        if (fileInfo.state !== 'ACTIVE') {
+                            throw new Error(`Gemini Files API video processing failed with state: ${fileInfo.state}`);
+                        }
+
+                        contents.push({
+                            fileData: {
+                                fileUri: fileInfo.uri,
+                                mimeType: fileInfo.mimeType || videoMime,
+                            }
+                        });
+                    }
+                } else if (mimeType.startsWith('image/') || mimeType === 'application/pdf') {
                     contents.push({
                         text: `Attached File [${file.originalname}]:`
                     });
@@ -176,6 +342,20 @@ AUDIT RULES:
         } catch (apiError) {
             console.warn('[GEMINI-API-NOTICE] Live Gemini audit fell back to guideline heuristics:', apiError.message);
             return heuristicGuidelineScan(text, files, consolidatedText);
+        } finally {
+            // Cleanup uploaded files on Gemini servers and temporary files on disk
+            for (const uploaded of uploadedFilesToCleanup) {
+                try {
+                    await ai.files.delete({ name: uploaded.name });
+                } catch (delErr) {
+                    console.warn('[GEMINI-FILES-CLEANUP-NOTICE]', delErr.message);
+                }
+            }
+            for (const tempPath of tempFilesToCleanup) {
+                try {
+                    if (fs.existsSync(tempPath)) fs.unlinkSync(tempPath);
+                } catch (e) { }
+            }
         }
     } else {
         return heuristicGuidelineScan(text, files, consolidatedText);
@@ -387,9 +567,19 @@ function cleanGeminiOutput(raw, originalText, files) {
             return fName === bName || fName.includes(bName) || bName.includes(fName);
         }) || (files.length === 1 ? files[0] : null);
 
+        const isVid = matched ? isVideoFile(matched) : (b.media_type === 'video');
+        const isAud = matched ? isAudioFile(matched) : (b.media_type === 'audio');
+        const defaultRule = isVid ? 'VID-01' : (isAud ? 'AUD-01' : undefined);
+        const defaultSource = isVid ? 'guidelines/video_and_motion_standards.md' : (isAud ? 'guidelines/audio_and_voice_standards.md' : undefined);
+
         return {
             ...b,
-            file_name: matched ? matched.originalname : b.file_name
+            file_name: matched ? matched.originalname : b.file_name,
+            media_type: b.media_type || (isVid ? 'video' : (isAud ? 'audio' : (matched && (matched.mimetype || '').startsWith('image/') ? 'image' : 'document'))),
+            rule_id: b.rule_id || defaultRule,
+            guideline_source: b.guideline_source || defaultSource,
+            transcript: b.transcript || undefined,
+            findings: Array.isArray(b.findings) ? b.findings : []
         };
     });
 
@@ -456,17 +646,64 @@ function heuristicGuidelineScan(text = '', files = []) {
 
     for (const file of files) {
         const fn = file.originalname.toLowerCase();
-        if (fn.includes('neon') || fn.includes('magenta') || fn.includes('unapproved')) {
+        if (isAudioFile(file)) {
+            // Audio cannot be analyzed offline without Gemini API
+            badFiles.push({
+                file_name: file.originalname,
+                problem: "Audio could not be AI-reviewed; manual review required. Offline engine cannot parse spoken audio narration, acoustics, or brand claims.",
+                suggestion: "Submit this post to the Pending Review Queue for human governance review.",
+                media_type: "audio",
+                rule_id: "AUD-REVIEW",
+                guideline_source: "guidelines/audio_and_voice_standards.md",
+                transcript: "Transcript unavailable in offline mode. Requires manual acoustic listening.",
+                findings: [
+                    {
+                        timestamp_start: "00:00",
+                        timestamp_end: "00:00",
+                        category: "compliance",
+                        description: "Audio could not be AI-reviewed; manual review required.",
+                        evidence: `Attached audio file: ${file.originalname}`,
+                        suggested_fix: "Requires manual governance officer inspection."
+                    }
+                ]
+            });
+        } else if (isVideoFile(file)) {
+            // Video cannot be analyzed offline without Gemini API
+            badFiles.push({
+                file_name: file.originalname,
+                problem: "Video could not be AI-reviewed; manual review required. Offline engine cannot parse video frames, audio narration, or motion standards.",
+                suggestion: "Submit this post to the Pending Review Queue for human governance review.",
+                media_type: "video",
+                rule_id: "VID-REVIEW",
+                guideline_source: "guidelines/video_and_motion_standards.md",
+                findings: [
+                    {
+                        timestamp_start: "00:00",
+                        timestamp_end: "00:00",
+                        category: "compliance",
+                        description: "Video could not be AI-reviewed; manual review required.",
+                        evidence: `Attached video file: ${file.originalname}`,
+                        suggested_fix: "Requires manual governance officer inspection."
+                    }
+                ]
+            });
+        } else if (fn.includes('neon') || fn.includes('magenta') || fn.includes('unapproved')) {
             badFiles.push({
                 file_name: file.originalname,
                 problem: "Asset color palette deviation. Uncalibrated neon/magenta overlays violate Section 1.2 of Visual Standards.",
-                suggestion: "Replace asset with official enterprise palette (Deep Navy #0A0F1D or Electric Cyan #06B6D4) master SVG/PNG."
+                suggestion: "Replace asset with official enterprise palette (Deep Navy #0A0F1D or Electric Cyan #06B6D4) master SVG/PNG.",
+                media_type: "image",
+                rule_id: "VIS-02",
+                guideline_source: "guidelines/visual_and_accessibility_standards.md"
             });
         } else if (fn.includes('distort') || fn.includes('stretched')) {
             badFiles.push({
                 file_name: file.originalname,
                 problem: "Logo safe zone violation. Emblem aspect ratio is distorted or safe zone margin is compromised.",
-                suggestion: "Use unaltered master SVG logo from the 2026 enterprise asset library."
+                suggestion: "Use unaltered master SVG logo from the 2026 enterprise asset library.",
+                media_type: "image",
+                rule_id: "VIS-01",
+                guideline_source: "guidelines/visual_and_accessibility_standards.md"
             });
         } else {
             goodFiles.push(file.originalname);

@@ -1,4 +1,4 @@
-# Visual & Asset Standards
+# Visual, Asset & Accessibility Standards
 
 1. **Approved Brand Color Palette:**
    - Deep Navy: `#0a0f1d`

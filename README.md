@@ -208,3 +208,116 @@ npm test
 
 ### System Health
 - `GET /api/health` — Checks database connectivity, pool latency in milliseconds, table count, and active connections.
+
+---
+
+## 🎥 Video Audit & Motion Standards Governance (Multimodal Gemini AI)
+
+TrueTone supports full multimodal **Video Auditing** alongside documents/PDFs and visual images in the Publish & Verification Hub. When a video is attached to a draft post, Gemini audits video frames, audio narration, and on-screen text/lower-thirds against the official video guideline: [`guidelines/video_and_motion_standards.md`](file:///c:/Users/Tanishq/Downloads/TrueTone/guidelines/video_and_motion_standards.md).
+
+### 🎬 Gemini Files API Architecture
+- **Large Videos (> 15MB)**: Automatically uploaded via `@google/genai` Files API (`ai.files.upload`), polled until in `ACTIVE` state, and passed to Gemini via `fileData: { fileUri, mimeType }`. Uploaded server files are automatically deleted from Google servers in the `finally` block to protect enterprise confidentiality.
+- **Small Videos (<= 15MB)**: Streamlined via in-memory base64 `inlineData` for rapid verification turnaround.
+- **Configurable Size Limits**: Regulated via the `MAX_VIDEO_MB` environment variable (default: `100MB`).
+- **Supported Video MIME Types**: `video/mp4`, `video/quicktime` (.mov), `video/webm`, `video/mpeg`, `video/x-msvideo` (.avi).
+
+### 📋 Video Guidelines & Rule Identifiers (`VID-01` to `VID-09`)
+All video audits are strictly grounded in [`guidelines/video_and_motion_standards.md`](file:///c:/Users/Tanishq/Downloads/TrueTone/guidelines/video_and_motion_standards.md):
+- `VID-01`: **Brand Identity & Logo Safe Zones** — Opening/closing end cards, safe zone margins, no distorted/stretched emblems.
+- `VID-02`: **Color & Typography** — On-screen graphics, lower-thirds, and titles must use official palette (#0A0F1D, #06B6D4); no off-palette neon overlays.
+- `VID-03`: **Spoken & On-Screen Claims** — Narration and titles must follow approved facts; no absolute claims ("100% infallible").
+- `VID-04`: **Tone & Enterprise Dignity** — Voiceover must adhere to brand dignity; no retail clickbait ("Buy now!!", "Crazy deals").
+- `VID-05`: **Compliance & Safe Harbor Disclaimers** — Forward-looking statements require on-screen Safe Harbor note for >= 3 seconds.
+- `VID-06`: **Accessibility & Motion Safety** — Subtitles required for spoken audio; WCAG 2.2 AA contrast; no flashing > 3 times/sec (WCAG 2.3.1).
+- `VID-07`: **Confidentiality & Privacy** — No visible internal dashboards, customer PII, unreleased code, or unconsented faces.
+- `VID-08`: **Third-Party Licensing & IP** — No unlicensed stock audio, competitor logos, or copyrighted tracks.
+- `VID-09`: **Format & Channel Constraints** — Aspect ratios and durations tailored per channel (16:9, 1:1, 9:16).
+
+### 🧩 Extended Review Schema & Interactive UI
+Each flagged video item in `bad_files` produces:
+```json
+{
+  "file_name": "product_demo.mp4",
+  "media_type": "video",
+  "rule_id": "VID-03",
+  "guideline_source": "guidelines/video_and_motion_standards.md",
+  "problem": "Narration asserts absolute 100% infallible guarantee at 00:08.",
+  "suggestion": "Revise script to reference 99.9% consistency across enterprise corpora.",
+  "findings": [
+    {
+      "timestamp_start": "00:05",
+      "timestamp_end": "00:12",
+      "category": "claim",
+      "description": "Voiceover states 'our engine never makes a single mistake'.",
+      "evidence": "Spoken audio: 'never makes a single mistake'",
+      "suggested_fix": "State: 'engineered for 99.9% accuracy across enterprise workloads'"
+    }
+  ]
+}
+```
+- **Clickable Timestamp Seeking**: In the **Asset Violation Card**, clicking any timestamp badge (`⏱️ MM:SS - MM:SS`) immediately seeks the video preview player directly to that frame.
+- **Server-Side Publishing Enforcement**: Posts with unresolved video violations or unreviewed videos are strictly prevented from direct publish (`POST /api/publish` returns HTTP 400) and routed to the **Pending Review Queue**.
+- **Offline Fallback Guarantee**: If Gemini inference is unreachable, TrueTone marks attached videos as "unverified" (`VID-REVIEW`) and forces human governance review. Unreviewed videos are never silently published.
+
+### ⚠️ Known Limitations & AI Disclosure
+1. **Clip Length & Sampling Rate**: Videos longer than 5 minutes or exceeding `MAX_VIDEO_MB` should be segmented. Gemini processes sampled frames; extremely brief single-frame glitches (< 0.1s) may occasionally escape automated detection.
+2. **Human Governance Requirement**: TrueTone operates under a "Human-in-the-Loop" architecture. AI warnings and violation cards provide governance guidance, but final dispatches and exceptions require human review and consensus voting.
+3. **Disclosure**: Video audits utilize Google Gemini Multimodal APIs assisted by Antigravity-designed code.
+
+---
+
+## 🎵 Audio Audit & Acoustic Voice Standards Governance (Multimodal Gemini AI)
+
+TrueTone supports full multimodal **Audio Auditing** alongside documents/PDFs, visual images, and video assets in the Publish & Verification Hub. When an audio file (podcast, voice memo, announcement, interview) is attached, Gemini listens to narration, acoustic delivery, sound quality, and background tracks against the official audio guideline: [`guidelines/audio_and_voice_standards.md`](file:///c:/Users/Tanishq/Downloads/TrueTone/guidelines/audio_and_voice_standards.md).
+
+### 🎙️ Gemini Files API & Inline Architecture
+- **Large Audio (> 15MB)**: Automatically uploaded via `@google/genai` Files API (`ai.files.upload`), polled until `ACTIVE`, and passed to Gemini via `fileData: { fileUri, mimeType }`. Uploaded server files are automatically cleaned up from Google servers in the `finally` block to protect enterprise confidentiality.
+- **Small Audio (<= 15MB)**: Streamlined via in-memory base64 `inlineData` for rapid acoustic verification turnaround.
+- **Configurable Size Limits**: Regulated via the `MAX_AUDIO_MB` environment variable (default: `50MB`).
+- **Supported Audio MIME Types**: `audio/mpeg` (.mp3), `audio/wav`, `audio/x-wav`, `audio/mp4`, `audio/x-m4a`, `audio/aac`, `audio/ogg`, `audio/flac`, `audio/webm`.
+
+### 📋 Audio Guidelines & Rule Identifiers (`AUD-01` to `AUD-10`)
+All audio audits are strictly grounded in [`guidelines/audio_and_voice_standards.md`](file:///c:/Users/Tanishq/Downloads/TrueTone/guidelines/audio_and_voice_standards.md):
+- `AUD-01`: **Brand Voice & Measured Tone** — Voiceover must maintain dignified enterprise tone; probabilistic framing; no clickbait or retail urgency ("Act now!", "Limited time").
+- `AUD-02`: **Claims & Verifiable Benchmarks** — Spoken claims must match approved corporate facts; no absolute claims ("100% guaranteed", "never fails").
+- `AUD-03`: **Brand Nomenclature & Pronunciation** — "TrueTone" pronounced clearly in CamelCase; no outdated product or feature names.
+- `AUD-04`: **Statutory Safe Harbor Compliance** — Forward-looking statements require a clearly spoken Section 27A Safe Harbor disclaimer at normal conversational pace.
+- `AUD-05`: **Confidentiality & Non-Disclosure** — No spoken internal codenames, unreleased metrics, customer PII, or internal credentials.
+- `AUD-06`: **Accessibility & Transcription** — Spoken audio must include an accompanying transcription; speech must remain intelligible above background tracks.
+- `AUD-07`: **Acoustic Quality & Loudness** — Clean acoustic mastering; no clipping, heavy distortion, abrupt volume spikes, or extended dead air.
+- `AUD-08`: **Licensing, Music & Voice Rights** — No unlicensed copyrighted music beds, jingles, or unconsented voice synthesis/cloning.
+- `AUD-09`: **Language, Conduct & Non-Discrimination** — Professional delivery free from profanity, bias, harassment, or derogatory remarks.
+- `AUD-10`: **Channel Format & Duration** — Audio lengths tailored per medium: Podcasts (up to 45 mins), LinkedIn audio (up to 5 mins), Social/Press (short clips).
+
+### 🧩 Extended Review Schema with Acoustic Findings & Transcript
+Each flagged audio item in `bad_files` produces:
+```json
+{
+  "file_name": "executive_podcast_q3.mp3",
+  "media_type": "audio",
+  "rule_id": "AUD-02",
+  "guideline_source": "guidelines/audio_and_voice_standards.md",
+  "problem": "Spoken dialogue claims '100% infallible tone protection' at 00:04.",
+  "suggestion": "Re-record or edit phrase to state 'engineered for 99.9% consistency'.",
+  "transcript": "Welcome to TrueTone. Our platform never makes a single mistake and is 100% infallible.",
+  "findings": [
+    {
+      "timestamp_start": "00:03",
+      "timestamp_end": "00:07",
+      "category": "claim",
+      "description": "Speaker states 'never makes a single mistake and is 100% infallible'.",
+      "evidence": "Spoken audio: '100% infallible'",
+      "suggested_fix": "State 'engineered for 99.9% consistency'"
+    }
+  ]
+}
+```
+- **Inline `<audio>` Chips & Interactive Preview**: Attached audio chips include an inline audio player for immediate scrubbing. Clicking the chip opens the expanded modal player.
+- **Clickable Timestamp Seeking**: In the **Asset Violation Card**, clicking `⏱️ MM:SS - MM:SS (Seek Audio)` instantly seeks the player to the exact second of violation.
+- **Collapsible Transcript**: Creators and reviewers can inspect the full transcribed speech directly within the violation card or the Pending Review drawer.
+- **Server-Side Enforcement**: Unresolved audio issues block direct publishing (`POST /api/publish` returns HTTP 400) and automatically route posts to the **Pending Review Queue**.
+- **Offline Fallback Guarantee**: If Gemini inference is offline or rate-limited, TrueTone flags attached audio with rule `AUD-REVIEW` ("Audio could not be AI-reviewed; manual review required") and forces human governance review.
+
+### ⚠️ Audio Limitations & Governance
+1. **Accents & Background Noise**: Very heavy acoustic background noise or low-quality microphone audio may affect Gemini transcription precision.
+2. **Human-in-the-Loop**: AI acoustical audits assist creators and editors; final publishing decisions and policy exemptions remain with designated human governance officers.

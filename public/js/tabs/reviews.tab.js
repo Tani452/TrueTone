@@ -551,17 +551,37 @@
                     <div class="review-attachments-grid">
                         ${post.files.map(f => {
                             // Check if file is flagged in bad_files
-                            const badMatch = badFiles.find(bf => bf.filename === f.original_name || bf.filename === f.stored_name || (f.url && f.url.includes(bf.filename)));
+                            const badMatch = badFiles.find(bf => {
+                                const bName = (bf.file_name || bf.filename || '').toLowerCase().trim();
+                                const oName = (f.original_name || '').toLowerCase().trim();
+                                const sName = (f.stored_name || '').toLowerCase().trim();
+                                return bName === oName || bName === sName || (f.url && f.url.toLowerCase().includes(bName));
+                            });
                             const isImage = f.mime_type && f.mime_type.startsWith('image/');
+                            const isVideo = (f.media_type === 'video') || (f.mime_type && f.mime_type.startsWith('video/')) ||
+                                ['.mp4', '.mov', '.webm', '.mpeg', '.avi'].some(ext => (f.original_name || '').toLowerCase().endsWith(ext));
+                            const isAudio = (f.media_type === 'audio') || (f.mime_type && f.mime_type.startsWith('audio/')) ||
+                                ['.mp3', '.wav', '.m4a', '.aac', '.ogg', '.flac'].some(ext => (f.original_name || '').toLowerCase().endsWith(ext));
 
                             if (badMatch) {
+                                const findings = Array.isArray(badMatch.findings) ? badMatch.findings : [];
+                                const ruleId = badMatch.rule_id || (isVideo ? 'VID-01' : (isAudio ? 'AUD-01' : 'VIS-01'));
+
                                 return `
                                     <div class="review-attachment-card flagged">
-                                        <div style="display: flex; justify-content: space-between; align-items: center;">
-                                            <span class="review-attachment-badge bad">⚠️ Guideline Issue</span>
-                                            <span style="font-size: 0.72rem; color: #f87171;">[${(badMatch.severity || 'CRITICAL').toUpperCase()}]</span>
+                                        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 4px;">
+                                            <span class="review-attachment-badge bad">${isVideo ? '🎥 Video Guideline Issue' : isAudio ? '🎵 Audio Guideline Issue' : '⚠️ Guideline Issue'}</span>
+                                            <span style="font-size: 0.72rem; color: #f87171; font-family: monospace; font-weight: 700;">[${escapeHtml(ruleId)}]</span>
                                         </div>
-                                        ${isImage ? `
+                                        ${isVideo ? `
+                                            <div style="width: 100%; max-height: 160px; background: #000; border-radius: 4px; overflow: hidden; display: flex; align-items: center; justify-content: center;">
+                                                <video controls src="${f.url}" preload="metadata" style="max-height: 100%; max-width: 100%; border-radius: 4px;"></video>
+                                            </div>
+                                        ` : isAudio ? `
+                                            <div style="width: 100%; padding: 8px 10px; background: rgba(0,0,0,0.4); border-radius: 4px; display: flex; align-items: center; justify-content: center;">
+                                                <audio controls src="${f.url}" preload="metadata" style="width: 100%;"></audio>
+                                            </div>
+                                        ` : isImage ? `
                                             <div style="width: 100%; height: 130px; background: #000; border-radius: 4px; overflow: hidden; display: flex; align-items: center; justify-content: center;">
                                                 <img src="${f.url}" alt="${escapeHtml(f.original_name)}" style="max-height: 100%; max-width: 100%; object-fit: contain;">
                                             </div>
@@ -574,8 +594,24 @@
                                             ${escapeHtml(f.original_name)}
                                         </div>
                                         <div style="font-size: 0.76rem; color: #fca5a5; background: rgba(220, 38, 38, 0.15); border-left: 2px solid #dc2626; padding: 4px 8px; border-radius: 2px;">
-                                            ${escapeHtml(badMatch.issue || badMatch.rule || 'Brand rule violation detected')}
+                                            ${escapeHtml(badMatch.problem || badMatch.issue || badMatch.rule || 'Brand rule violation detected')}
                                         </div>
+                                        ${badMatch.transcript ? `
+                                            <details style="font-size: 0.74rem; background: rgba(0,0,0,0.35); border-radius: 3px; padding: 4px 8px;">
+                                                <summary style="color: #38bdf8; cursor: pointer; font-weight: 600;">📝 Transcript</summary>
+                                                <div style="color: #cbd5e1; margin-top: 4px; white-space: pre-wrap;">${escapeHtml(badMatch.transcript)}</div>
+                                            </details>
+                                        ` : ''}
+                                        ${findings.length > 0 ? `
+                                            <div style="font-size: 0.74rem; background: rgba(0,0,0,0.4); border-left: 2px solid #f59e0b; padding: 4px 8px; border-radius: 2px;">
+                                                <div style="color: #fde68a; font-weight: 700; font-size: 0.68rem; text-transform: uppercase;">⏱️ Findings (${findings.length})</div>
+                                                ${findings.map(finding => `
+                                                    <div style="color: #fca5a5; margin-top: 2px; font-size: 0.72rem;">
+                                                        <strong>[${escapeHtml(finding.timestamp_start)}-${escapeHtml(finding.timestamp_end)}] ${escapeHtml(finding.category)}:</strong> ${escapeHtml(finding.description)}
+                                                    </div>
+                                                `).join('')}
+                                            </div>
+                                        ` : ''}
                                         <div style="margin-top: auto; padding-top: 6px;">
                                             <a href="${f.url}" target="_blank" style="font-size: 0.76rem; color: #60a5fa; text-decoration: underline;">View Full Attachment &nearr;</a>
                                         </div>
@@ -585,9 +621,17 @@
                                 return `
                                     <div class="review-attachment-card clean">
                                         <div style="display: flex; justify-content: space-between; align-items: center;">
-                                            <span class="review-attachment-badge good">✓ Passed AI Check</span>
+                                            <span class="review-attachment-badge good">${isVideo ? '🎥 ✓ Passed Video Standards' : isAudio ? '🎵 ✓ Passed Audio Standards' : '✓ Passed AI Check'}</span>
                                         </div>
-                                        ${isImage ? `
+                                        ${isVideo ? `
+                                            <div style="width: 100%; max-height: 160px; background: #000; border-radius: 4px; overflow: hidden; display: flex; align-items: center; justify-content: center;">
+                                                <video controls src="${f.url}" preload="metadata" style="max-height: 100%; max-width: 100%; border-radius: 4px;"></video>
+                                            </div>
+                                        ` : isAudio ? `
+                                            <div style="width: 100%; padding: 8px 10px; background: rgba(0,0,0,0.4); border-radius: 4px; display: flex; align-items: center; justify-content: center;">
+                                                <audio controls src="${f.url}" preload="metadata" style="width: 100%;"></audio>
+                                            </div>
+                                        ` : isImage ? `
                                             <div style="width: 100%; height: 130px; background: #000; border-radius: 4px; overflow: hidden; display: flex; align-items: center; justify-content: center;">
                                                 <img src="${f.url}" alt="${escapeHtml(f.original_name)}" style="max-height: 100%; max-width: 100%; object-fit: contain;">
                                             </div>

@@ -5,7 +5,7 @@
 
 const http = require('http');
 const path = require('path');
-require('dotenv').config({ path: path.resolve(__dirname, '../.env') });
+require('dotenv').config({ path: path.resolve(__dirname, '../.env'), override: true });
 
 const app = require('./app');
 const db = require('./db');
@@ -25,6 +25,8 @@ server.listen(PORT, async () => {
     console.log(`  TrueTone High-Performance Governance Engine Started`);
     console.log(`  Local URL:        http://localhost:${PORT}`);
     console.log(`  API Healthcheck:  http://localhost:${PORT}/api/health`);
+    console.log(`  Gemini Model:     ${process.env.GEMINI_MODEL || 'gemini-3.6-flash'}`);
+    console.log(`  Gemini Key:       ${process.env.GEMINI_API_KEY ? 'Configured (' + process.env.GEMINI_API_KEY.substring(0, 8) + '...)' : 'NOT CONFIGURED'}`);
     console.log(`  Database Target:  ${process.env.DB_NAME || 'TrueTone'} @ ${process.env.DB_HOST || 'localhost'}:${process.env.DB_PORT || 5432}`);
     console.log('==============================================================');
 

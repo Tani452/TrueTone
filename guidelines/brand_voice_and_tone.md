@@ -1,4 +1,4 @@
-# Brand Voice & Tone Guidelines
+# TrueTone Enterprise Brand Voice & Tone Guidelines
 
 1. **Brand Spelling:** Always format the brand name as **TrueTone** (CamelCase). Prohibit "truetone" or "True Tone".
 2. **Probabilistic Framing (No Absolutes):** Prohibit absolute claims such as "100% infallible", "guarantees zero mistakes", "never fails", or "miracle".
