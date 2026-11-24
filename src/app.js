@@ -39,10 +39,15 @@ app.use('/api/users', usersRoutes);
 app.use('/api/guidelines', guidelinesRoutes);
 app.use('/api/publish-submission', submissionRoutes);
 
+// Lightweight ping/health endpoint for cloud orchestrators (Railway, Render, AWS)
+app.get('/health', (req, res) => {
+    res.status(200).json({ status: 'healthy', uptime: process.uptime() });
+});
+
 // Database Health & Performance Diagnostics Endpoint
 app.get('/api/health', async (req, res) => {
     const health = await db.checkHealth();
-    res.status(health.status === 'healthy' ? 200 : 503).json(health);
+    res.status(200).json(health);
 });
 
 // Root fallback to serve index.html

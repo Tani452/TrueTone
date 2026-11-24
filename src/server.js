@@ -5,14 +5,18 @@
 
 const http = require('http');
 const path = require('path');
-require('dotenv').config({ path: path.resolve(__dirname, '../.env'), override: true });
+
+// Preserve hosting provider (Railway, Render, Heroku) assigned PORT before dotenv
+const assignedPort = process.env.PORT;
+require('dotenv').config({ path: path.resolve(__dirname, '../.env') });
 
 const app = require('./app');
 const db = require('./db');
 const { checkAndFinalizeExpiredVotes } = require('./services/pending.service');
 const { runWeeklyLogAnalysis } = require('./services/actions.service');
 
-const PORT = process.env.PORT || 3000;
+const PORT = assignedPort || process.env.PORT || 3000;
+const HOST = '0.0.0.0';
 const server = http.createServer(app);
 
 // 60-second periodic background job to finalize expired pending votes
@@ -20,11 +24,11 @@ let expireIntervalId = null;
 // Weekly background job to synthesize logs into cumulative actions reports (every 7 days)
 let weeklyAnalysisIntervalId = null;
 
-server.listen(PORT, async () => {
+server.listen(PORT, HOST, async () => {
     console.log('==============================================================');
     console.log(`  TrueTone High-Performance Governance Engine Started`);
-    console.log(`  Local URL:        http://localhost:${PORT}`);
-    console.log(`  API Healthcheck:  http://localhost:${PORT}/api/health`);
+    console.log(`  Listening on:     http://${HOST}:${PORT}`);
+    console.log(`  API Healthcheck:  http://${HOST}:${PORT}/api/health`);
     console.log(`  Gemini Model:     ${process.env.GEMINI_MODEL || 'gemini-3.6-flash'}`);
     console.log(`  Gemini Key:       ${process.env.GEMINI_API_KEY ? 'Configured (' + process.env.GEMINI_API_KEY.substring(0, 8) + '...)' : 'NOT CONFIGURED'}`);
     console.log(`  Database Target:  ${process.env.DB_NAME || 'TrueTone'} @ ${process.env.DB_HOST || 'localhost'}:${process.env.DB_PORT || 5432}`);
