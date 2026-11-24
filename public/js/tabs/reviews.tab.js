@@ -27,7 +27,7 @@
     // Helper: Format countdown badge string
     function formatCountdown(record) {
         if (!record.is_voting_open) {
-            return `<span class="tt-countdown-badge closed">🔒 Voting Concluded</span>`;
+            return `<span class="tt-countdown-badge closed">Voting Concluded</span>`;
         }
 
         const remainingMs = record.time_remaining_ms || 0;
@@ -36,12 +36,12 @@
         const hours = totalHours % 24;
 
         if (days > 0) {
-            return `<span class="tt-countdown-badge open">⏱ ${days}d ${hours}h remaining</span>`;
+            return `<span class="tt-countdown-badge open">${days}d ${hours}h remaining</span>`;
         } else if (hours > 0) {
-            return `<span class="tt-countdown-badge open">⏱ ${hours}h remaining</span>`;
+            return `<span class="tt-countdown-badge open">${hours}h remaining</span>`;
         } else {
             const minutes = Math.floor(remainingMs / (1000 * 60));
-            return `<span class="tt-countdown-badge open">⏱ ${minutes}m remaining</span>`;
+            return `<span class="tt-countdown-badge open">${minutes}m remaining</span>`;
         }
     }
 
@@ -49,11 +49,11 @@
     function formatStatusPill(status) {
         const s = (status || 'UNAPPROVED').toUpperCase();
         if (s === 'APPROVED') {
-            return `<span class="review-status-pill approved">✓ Approved & Published</span>`;
+            return `<span class="review-status-pill approved">Approved & Published</span>`;
         } else if (s === 'REJECTED') {
-            return `<span class="review-status-pill rejected">✕ Rejected & Blocked</span>`;
+            return `<span class="review-status-pill rejected">Rejected & Blocked</span>`;
         } else {
-            return `<span class="review-status-pill unapproved">⏳ Pending Review</span>`;
+            return `<span class="review-status-pill unapproved">Pending Review</span>`;
         }
     }
 
@@ -74,8 +74,8 @@
         return `
             <div class="consensus-bar-wrapper">
                 <div class="consensus-bar-labels">
-                    <span style="color: #34d399; font-weight: 600;">${yesCount} Yes</span>
-                    <span style="color: #f87171; font-weight: 600;">${noCount} No</span>
+                    <span class="consensus-label-yes">${yesCount} Yes</span>
+                    <span class="consensus-label-no">${noCount} No</span>
                 </div>
                 <div class="consensus-bar-track">
                     <div class="consensus-bar-fill-yes" style="width: ${yesPercent}%;"></div>
@@ -87,7 +87,7 @@
 
     // Helper: Safely wrap unresolved text issues into interactive spans
     function highlightProblematicText(fullText, textIssues) {
-        if (!fullText) return '<span style="color: var(--text-muted); font-style: italic;">(No text content provided)</span>';
+        if (!fullText) return '<span class="review-empty-text">(No text content provided)</span>';
         if (!Array.isArray(textIssues) || textIssues.length === 0) {
             return escapeHtml(fullText);
         }
@@ -143,11 +143,10 @@
                 if (!issue) return;
 
                 const severity = (issue.severity || 'WARNING').toUpperCase();
-                const sevColor = severity === 'CRITICAL' ? '#f43f5e' : severity === 'WARNING' ? '#fbbf24' : '#38bdf8';
 
                 popover.innerHTML = `
                     <div class="tt-popover-title">
-                        <span style="color: ${sevColor}; font-weight: 700;">[${severity}]</span>
+                        <span class="popover-sev-tag ${severity.toLowerCase()}">[${severity}]</span>
                         <span>Brand Guideline Issue</span>
                     </div>
                     <div class="tt-popover-rule">${escapeHtml(issue.issue || issue.rule || 'Deviation from approved tone/brand standard')}</div>
@@ -204,12 +203,12 @@
             <div class="review-card-top">
                 <div class="review-author-info">
                     <div class="review-author-avatar">${authorInitials}</div>
-                    <div>
+                    <div class="review-author-text">
                         <div class="review-author-name">${escapeHtml(authorName)}</div>
                         <div class="review-author-meta">${escapeHtml(department)} • ${escapeHtml(designation)} • ${new Date(record.timestamp).toLocaleDateString()}</div>
                     </div>
                 </div>
-                <div style="display: flex; align-items: center; gap: 8px;">
+                <div class="review-card-badges">
                     ${formatStatusPill(record.status)}
                     ${formatCountdown(record)}
                 </div>
@@ -219,24 +218,25 @@
 
             ${(textIssuesCount > 0 || badFilesCount > 0) ? `
                 <div class="review-flag-summary">
-                    <span>⚠️ AI Detected Issues:</span>
+                    <span class="review-flag-label">AI Detected Issues:</span>
                     ${textIssuesCount > 0 ? `<strong>${textIssuesCount} Text Issue${textIssuesCount > 1 ? 's' : ''}</strong>` : ''}
-                    ${(textIssuesCount > 0 && badFilesCount > 0) ? `<span>•</span>` : ''}
+                    ${(textIssuesCount > 0 && badFilesCount > 0) ? `<span class="review-flag-dot">•</span>` : ''}
                     ${badFilesCount > 0 ? `<strong>${badFilesCount} Flagged File${badFilesCount > 1 ? 's' : ''}</strong>` : ''}
                 </div>
             ` : `
-                <div class="review-flag-summary" style="color: #6ee7b7; border-color: rgba(16, 185, 129, 0.2);">
-                    ✓ Standard review queue submission
+                <div class="review-flag-summary clean">
+                    Standard review queue submission
                 </div>
             `}
 
             <div class="review-card-footer">
                 ${renderConsensusBar(record.vote_approve, record.vote_not_approve)}
-                <div style="display: flex; align-items: center; gap: 14px;">
-                    <span style="font-size: 0.8rem; color: var(--text-muted); display: inline-flex; align-items: center; gap: 4px;">
-                        💬 ${record.total_comments || 0}
+                <div class="review-card-footer-right">
+                    <span class="review-comments-pill">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                        <span>${record.total_comments || 0}</span>
                     </span>
-                    <button class="btn-secondary" style="font-size: 0.82rem; padding: 6px 14px;" onclick="window.open_review_detail('${record.id}')">
+                    <button class="btn-secondary" onclick="window.open_review_detail('${record.id}')">
                         Inspect & Vote &rarr;
                     </button>
                 </div>
@@ -264,33 +264,33 @@
         workspace.innerHTML = `
             <div class="tab-viewport" id="reviews-tab-container">
                 <!-- Header -->
-                <div class="tab-header" style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 16px;">
+                <div class="tab-header review-queue-header-area">
                     <div>
                         <h2>Brand Governance Review Queue</h2>
                         <p>Collaborative peer review for content flagged with unresolved brand guideline issues.</p>
                     </div>
-                    <div style="display: flex; align-items: center; gap: 8px; font-size: 0.82rem; color: #34d399; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.25); padding: 6px 12px; border-radius: 20px;">
+                    <div class="queue-live-status-pill">
                         <span class="pulse-dot"></span>
-                        <span>Live Queue Synced (Auto-detecting new submissions)</span>
+                        <span>Live Queue Synced</span>
                     </div>
                 </div>
 
                 <!-- Filter Controls -->
                 <div class="reviews-queue-header">
-                    <div class="reviews-filter-group">
-                        <button class="reviews-filter-btn ${currentFilter === 'all' ? 'active' : ''}" data-filter="all">All Submissions</button>
-                        <button class="reviews-filter-btn ${currentFilter === 'open' ? 'active' : ''}" data-filter="open">Under Review</button>
-                        <button class="reviews-filter-btn ${currentFilter === 'approved' ? 'active' : ''}" data-filter="approved">Approved</button>
-                        <button class="reviews-filter-btn ${currentFilter === 'rejected' ? 'active' : ''}" data-filter="rejected">Blocked</button>
+                    <div class="reviews-filter-group" role="tablist" aria-label="Review Queue Filter">
+                        <button class="reviews-filter-btn ${currentFilter === 'all' ? 'active' : ''}" data-filter="all" role="tab" aria-selected="${currentFilter === 'all'}">All Submissions</button>
+                        <button class="reviews-filter-btn ${currentFilter === 'open' ? 'active' : ''}" data-filter="open" role="tab" aria-selected="${currentFilter === 'open'}">Under Review</button>
+                        <button class="reviews-filter-btn ${currentFilter === 'approved' ? 'active' : ''}" data-filter="approved" role="tab" aria-selected="${currentFilter === 'approved'}">Approved</button>
+                        <button class="reviews-filter-btn ${currentFilter === 'rejected' ? 'active' : ''}" data-filter="rejected" role="tab" aria-selected="${currentFilter === 'rejected'}">Blocked</button>
                     </div>
-                    <div style="font-size: 0.82rem; color: var(--text-muted);" id="queue-count-display">
+                    <div class="queue-count-display" id="queue-count-display">
                         Loading pending queue...
                     </div>
                 </div>
 
                 <!-- Queue Cards List -->
                 <div class="reviews-queue-grid" id="reviews-queue-grid">
-                    <div style="text-align: center; padding: 40px; color: var(--text-muted);">
+                    <div class="queue-loading-state">
                         Fetching queue records from PostgreSQL...
                     </div>
                 </div>
@@ -344,14 +344,16 @@
                 const activeLabel = filterLabels[currentFilter] || currentFilter;
 
                 grid.innerHTML = `
-                    <div class="tt-queue-empty-state" style="background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 48px; text-align: center; color: var(--text-muted);">
-                        <div style="font-size: 2.2rem; margin-bottom: 12px;">🛡️</div>
-                        <h3 style="color: var(--text-primary); margin-bottom: 6px;">Queue is Clean</h3>
-                        <p style="font-size: 0.88rem; margin-bottom: ${currentFilter === 'all' ? '0' : '16px'};">
+                    <div class="tt-queue-empty-state">
+                        <div class="empty-state-icon" aria-hidden="true">
+                            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>
+                        </div>
+                        <h3>Queue is Clean</h3>
+                        <p class="empty-state-desc">
                             No submissions matching filter: <strong>"${escapeHtml(activeLabel)}"</strong>.
                         </p>
                         ${currentFilter !== 'all' ? `
-                            <button type="button" class="btn-reset-queue-filter" id="btn-reset-queue-filter" style="background: rgba(6, 182, 212, 0.12); border: 1px solid var(--accent-cyan); color: var(--accent-cyan); padding: 8px 18px; border-radius: 6px; cursor: pointer; font-size: 0.82rem; font-weight: 600; font-family: var(--font-mono); transition: all 0.2s ease;">
+                            <button type="button" class="btn-reset-queue-filter btn-secondary" id="btn-reset-queue-filter">
                                 &larr; View All Submissions
                             </button>
                         ` : ''}
@@ -441,7 +443,7 @@
         } catch (err) {
             console.error('[REVIEWS-QUEUE-FETCH-ERROR]', err);
             if (isReset && grid) {
-                grid.innerHTML = `<div style="color: var(--accent-rose); padding: 24px; text-align: center;">Error loading queue: ${escapeHtml(err.message)}</div>`;
+                grid.innerHTML = `<div class="review-error-banner">Error loading queue: ${escapeHtml(err.message)}</div>`;
             }
         }
     }
@@ -456,7 +458,7 @@
 
         workspace.innerHTML = `
             <div class="tab-viewport">
-                <div style="padding: 40px; text-align: center; color: var(--text-muted);">
+                <div class="queue-loading-state">
                     Loading detailed submission #${pendingId}...
                 </div>
             </div>
@@ -472,8 +474,8 @@
         } catch (err) {
             workspace.innerHTML = `
                 <div class="tab-viewport">
-                    <button class="btn-back-queue" onclick="window.reviews_tab()">&larr; Back to Queue</button>
-                    <div style="color: var(--accent-rose); margin-top: 24px;">Failed to load inspection view: ${escapeHtml(err.message)}</div>
+                    <button class="btn-back-queue btn-secondary" onclick="window.reviews_tab()">&larr; Back to Queue</button>
+                    <div class="review-error-banner">Failed to load inspection view: ${escapeHtml(err.message)}</div>
                 </div>
             `;
         }
@@ -505,226 +507,282 @@
         container.innerHTML = `
             <!-- Navigation & Actions Header -->
             <div class="review-detail-header">
-                <div style="display: flex; align-items: center; gap: 14px; flex-wrap: wrap;">
+                <div class="review-detail-header-left">
                     <button class="btn-back-queue" id="btn-back-to-queue">
                         &larr; Back to Review Queue
                     </button>
-                    <div>
-                        <h2 style="font-size: 1.25rem; font-weight: 700;">Submission #${record.id} Review</h2>
-                        <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 2px;">
-                            Author: <strong>${escapeHtml(post.author_name || 'Staff')}</strong> (${escapeHtml(post.department || 'General')} • ${escapeHtml(post.designation || 'Staff')}) • 
-                            Submitted: ${new Date(record.timestamp).toLocaleString()}
+                    <div class="review-detail-header-meta">
+                        <h2>Submission #${record.id} Review</h2>
+                        <div class="review-detail-submeta">
+                            Author: <strong>${escapeHtml(post.author_name || 'Staff')}</strong> (${escapeHtml(post.department || 'General')} • ${escapeHtml(post.designation || 'Staff')}) • Submitted: ${new Date(record.timestamp).toLocaleString()}
                         </div>
                     </div>
                 </div>
 
-                <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                <div class="review-detail-header-right">
                     ${formatStatusPill(record.status)}
                     ${formatCountdown(record)}
-                    <button class="btn-demo-finalize" id="btn-demo-finalize-top">
-                        ⏱ Simulate 5 Days Elapsed (Close Vote)
-                    </button>
                 </div>
             </div>
 
-            <!-- Content Inspection Card: Text with Highlighted Issues -->
-            <div class="card" style="background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 22px;">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
-                    <h3 style="font-size: 1rem; color: var(--text-primary); display: flex; align-items: center; gap: 8px;">
-                        <span>📝 Post Content Inspection</span>
-                        ${textIssues.length > 0 ? `<span style="font-size: 0.76rem; background: rgba(239, 68, 68, 0.2); color: #fca5a5; padding: 2px 8px; border-radius: 4px; border: 1px solid rgba(239, 68, 68, 0.3);">${textIssues.length} Violation${textIssues.length > 1 ? 's' : ''} Flagged</span>` : ''}
-                    </h3>
-                    <span style="font-size: 0.76rem; color: var(--text-muted);">Hover highlighted phrases to inspect AI recommendation</span>
-                </div>
+            <!-- Two-Column Workspace Layout (>=1100px) -->
+            <div class="review-detail-workspace-layout">
+                <!-- LEFT COLUMN: Reading surface, Attachments, Comments -->
+                <div class="review-detail-primary-col">
+                    <!-- Content Inspection Card: Text with Highlighted Issues -->
+                    <div class="card review-reading-surface-card">
+                        <div class="review-reading-surface-header">
+                            <h3 class="review-section-title">
+                                <span>Post Content Inspection</span>
+                                ${textIssues.length > 0 ? `<span class="review-issues-flag-badge">${textIssues.length} Violation${textIssues.length > 1 ? 's' : ''} Flagged</span>` : ''}
+                            </h3>
+                            <span class="review-surface-caption">Hover highlighted phrases to inspect AI recommendation</span>
+                        </div>
 
-                <div id="detail-highlighted-content" style="background: #090d16; border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); padding: 18px; font-size: 0.94rem; line-height: 1.7; color: #f8fafc; min-height: 90px; white-space: pre-wrap;">
-                    ${highlightProblematicText(post.text, textIssues)}
-                </div>
-            </div>
+                        <div id="detail-highlighted-content" class="review-reading-surface">
+                            ${highlightProblematicText(post.text, textIssues)}
+                        </div>
+                    </div>
 
-            <!-- Attachments Inspection: Clean vs Flagged Files -->
-            ${Array.isArray(post.files) && post.files.length > 0 ? `
-                <div class="card" style="background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 22px;">
-                    <h3 style="font-size: 1rem; color: var(--text-primary); margin-bottom: 14px; display: flex; align-items: center; gap: 8px;">
-                        <span>📎 Attached Media & Visuals (${post.files.length})</span>
-                    </h3>
-                    <div class="review-attachments-grid">
-                        ${post.files.map(f => {
-                            // Check if file is flagged in bad_files
-                            const badMatch = badFiles.find(bf => {
-                                const bName = (bf.file_name || bf.filename || '').toLowerCase().trim();
-                                const oName = (f.original_name || '').toLowerCase().trim();
-                                const sName = (f.stored_name || '').toLowerCase().trim();
-                                return bName === oName || bName === sName || (f.url && f.url.toLowerCase().includes(bName));
-                            });
-                            const isImage = f.mime_type && f.mime_type.startsWith('image/');
-                            const isVideo = (f.media_type === 'video') || (f.mime_type && f.mime_type.startsWith('video/')) ||
-                                ['.mp4', '.mov', '.webm', '.mpeg', '.avi'].some(ext => (f.original_name || '').toLowerCase().endsWith(ext));
-                            const isAudio = (f.media_type === 'audio') || (f.mime_type && f.mime_type.startsWith('audio/')) ||
-                                ['.mp3', '.wav', '.m4a', '.aac', '.ogg', '.flac'].some(ext => (f.original_name || '').toLowerCase().endsWith(ext));
+                    <!-- Attachments Inspection: Clean vs Flagged Files -->
+                    ${Array.isArray(post.files) && post.files.length > 0 ? `
+                        <div class="card review-attachments-card">
+                            <h3 class="review-section-title">
+                                <span>Attached Media & Visuals (${post.files.length})</span>
+                            </h3>
+                            <div class="review-attachments-grid">
+                                ${post.files.map(f => {
+                                    // Check if file is flagged in bad_files
+                                    const badMatch = badFiles.find(bf => {
+                                        const bName = (bf.file_name || bf.filename || '').toLowerCase().trim();
+                                        const oName = (f.original_name || '').toLowerCase().trim();
+                                        const sName = (f.stored_name || '').toLowerCase().trim();
+                                        return bName === oName || bName === sName || (f.url && f.url.toLowerCase().includes(bName));
+                                    });
+                                    const isImage = f.mime_type && f.mime_type.startsWith('image/');
+                                    const isVideo = (f.media_type === 'video') || (f.mime_type && f.mime_type.startsWith('video/')) ||
+                                        ['.mp4', '.mov', '.webm', '.mpeg', '.avi'].some(ext => (f.original_name || '').toLowerCase().endsWith(ext));
+                                    const isAudio = (f.media_type === 'audio') || (f.mime_type && f.mime_type.startsWith('audio/')) ||
+                                        ['.mp3', '.wav', '.m4a', '.aac', '.ogg', '.flac'].some(ext => (f.original_name || '').toLowerCase().endsWith(ext));
 
-                            if (badMatch) {
-                                const findings = Array.isArray(badMatch.findings) ? badMatch.findings : [];
-                                const ruleId = badMatch.rule_id || (isVideo ? 'VID-01' : (isAudio ? 'AUD-01' : 'VIS-01'));
+                                    if (badMatch) {
+                                        const findings = Array.isArray(badMatch.findings) ? badMatch.findings : [];
+                                        const ruleId = badMatch.rule_id || (isVideo ? 'VID-01' : (isAudio ? 'AUD-01' : 'VIS-01'));
 
-                                return `
-                                    <div class="review-attachment-card flagged">
-                                        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 4px;">
-                                            <span class="review-attachment-badge bad">${isVideo ? '🎥 Video Guideline Issue' : isAudio ? '🎵 Audio Guideline Issue' : '⚠️ Guideline Issue'}</span>
-                                            <span style="font-size: 0.72rem; color: #f87171; font-family: monospace; font-weight: 700;">[${escapeHtml(ruleId)}]</span>
-                                        </div>
-                                        ${isVideo ? `
-                                            <div style="width: 100%; max-height: 160px; background: #000; border-radius: 4px; overflow: hidden; display: flex; align-items: center; justify-content: center;">
-                                                <video controls src="${f.url}" preload="metadata" style="max-height: 100%; max-width: 100%; border-radius: 4px;"></video>
-                                            </div>
-                                        ` : isAudio ? `
-                                            <div style="width: 100%; padding: 8px 10px; background: rgba(0,0,0,0.4); border-radius: 4px; display: flex; align-items: center; justify-content: center;">
-                                                <audio controls src="${f.url}" preload="metadata" style="width: 100%;"></audio>
-                                            </div>
-                                        ` : isImage ? `
-                                            <div style="width: 100%; height: 130px; background: #000; border-radius: 4px; overflow: hidden; display: flex; align-items: center; justify-content: center;">
-                                                <img src="${f.url}" alt="${escapeHtml(f.original_name)}" style="max-height: 100%; max-width: 100%; object-fit: contain;">
-                                            </div>
-                                        ` : `
-                                            <div style="padding: 16px; background: rgba(0,0,0,0.3); border-radius: 4px; font-size: 0.85rem; color: #fca5a5;">
-                                                📄 ${escapeHtml(f.original_name)}
-                                            </div>
-                                        `}
-                                        <div style="font-size: 0.82rem; font-weight: 600; color: #fca5a5; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
-                                            ${escapeHtml(f.original_name)}
-                                        </div>
-                                        <div style="font-size: 0.76rem; color: #fca5a5; background: rgba(220, 38, 38, 0.15); border-left: 2px solid #dc2626; padding: 4px 8px; border-radius: 2px;">
-                                            ${escapeHtml(badMatch.problem || badMatch.issue || badMatch.rule || 'Brand rule violation detected')}
-                                        </div>
-                                        ${badMatch.transcript ? `
-                                            <details style="font-size: 0.74rem; background: rgba(0,0,0,0.35); border-radius: 3px; padding: 4px 8px;">
-                                                <summary style="color: #38bdf8; cursor: pointer; font-weight: 600;">📝 Transcript</summary>
-                                                <div style="color: #cbd5e1; margin-top: 4px; white-space: pre-wrap;">${escapeHtml(badMatch.transcript)}</div>
-                                            </details>
-                                        ` : ''}
-                                        ${findings.length > 0 ? `
-                                            <div style="font-size: 0.74rem; background: rgba(0,0,0,0.4); border-left: 2px solid #f59e0b; padding: 4px 8px; border-radius: 2px;">
-                                                <div style="color: #fde68a; font-weight: 700; font-size: 0.68rem; text-transform: uppercase;">⏱️ Findings (${findings.length})</div>
-                                                ${findings.map(finding => `
-                                                    <div style="color: #fca5a5; margin-top: 2px; font-size: 0.72rem;">
-                                                        <strong>[${escapeHtml(finding.timestamp_start)}-${escapeHtml(finding.timestamp_end)}] ${escapeHtml(finding.category)}:</strong> ${escapeHtml(finding.description)}
+                                        return `
+                                            <div class="review-attachment-card flagged">
+                                                <div class="attachment-header-row">
+                                                    <span class="review-attachment-badge bad">${isVideo ? 'Video Guideline Issue' : isAudio ? 'Audio Guideline Issue' : 'Guideline Issue'}</span>
+                                                    <span class="attachment-rule-tag">[${escapeHtml(ruleId)}]</span>
+                                                </div>
+                                                ${isVideo ? `
+                                                    <div class="attachment-media-frame video">
+                                                        <video controls src="${f.url}" preload="metadata"></video>
                                                     </div>
-                                                `).join('')}
+                                                ` : isAudio ? `
+                                                    <div class="attachment-media-frame audio">
+                                                        <audio controls src="${f.url}" preload="metadata"></audio>
+                                                    </div>
+                                                ` : isImage ? `
+                                                    <div class="attachment-media-frame image">
+                                                        <img src="${f.url}" alt="${escapeHtml(f.original_name)}">
+                                                    </div>
+                                                ` : `
+                                                    <div class="attachment-media-frame doc">
+                                                        📄 ${escapeHtml(f.original_name)}
+                                                    </div>
+                                                `}
+                                                <div class="attachment-file-name">
+                                                    ${escapeHtml(f.original_name)}
+                                                </div>
+                                                <div class="attachment-issue-desc">
+                                                    ${escapeHtml(badMatch.problem || badMatch.issue || badMatch.rule || 'Brand rule violation detected')}
+                                                </div>
+                                                ${badMatch.transcript ? `
+                                                    <details class="attachment-transcript-box">
+                                                        <summary>Transcript</summary>
+                                                        <div class="transcript-content">${escapeHtml(badMatch.transcript)}</div>
+                                                    </details>
+                                                ` : ''}
+                                                ${findings.length > 0 ? `
+                                                    <div class="attachment-findings-box">
+                                                        <div class="findings-heading">Findings (${findings.length})</div>
+                                                        ${findings.map(finding => `
+                                                            <div class="finding-item">
+                                                                <strong>[${escapeHtml(finding.timestamp_start)}-${escapeHtml(finding.timestamp_end)}] ${escapeHtml(finding.category)}:</strong> ${escapeHtml(finding.description)}
+                                                            </div>
+                                                        `).join('')}
+                                                    </div>
+                                                ` : ''}
+                                                <div class="attachment-card-footer">
+                                                    <a href="${f.url}" target="_blank" class="attachment-view-link">View Full Attachment &nearr;</a>
+                                                </div>
                                             </div>
-                                        ` : ''}
-                                        <div style="margin-top: auto; padding-top: 6px;">
-                                            <a href="${f.url}" target="_blank" style="font-size: 0.76rem; color: #60a5fa; text-decoration: underline;">View Full Attachment &nearr;</a>
-                                        </div>
-                                    </div>
-                                `;
-                            } else {
-                                return `
-                                    <div class="review-attachment-card clean">
-                                        <div style="display: flex; justify-content: space-between; align-items: center;">
-                                            <span class="review-attachment-badge good">${isVideo ? '🎥 ✓ Passed Video Standards' : isAudio ? '🎵 ✓ Passed Audio Standards' : '✓ Passed AI Check'}</span>
-                                        </div>
-                                        ${isVideo ? `
-                                            <div style="width: 100%; max-height: 160px; background: #000; border-radius: 4px; overflow: hidden; display: flex; align-items: center; justify-content: center;">
-                                                <video controls src="${f.url}" preload="metadata" style="max-height: 100%; max-width: 100%; border-radius: 4px;"></video>
+                                        `;
+                                    } else {
+                                        return `
+                                            <div class="review-attachment-card clean">
+                                                <div class="attachment-header-row">
+                                                    <span class="review-attachment-badge good">${isVideo ? '✓ Passed Video Standards' : isAudio ? '✓ Passed Audio Standards' : '✓ Passed AI Check'}</span>
+                                                </div>
+                                                ${isVideo ? `
+                                                    <div class="attachment-media-frame video">
+                                                        <video controls src="${f.url}" preload="metadata"></video>
+                                                    </div>
+                                                ` : isAudio ? `
+                                                    <div class="attachment-media-frame audio">
+                                                        <audio controls src="${f.url}" preload="metadata"></audio>
+                                                    </div>
+                                                ` : isImage ? `
+                                                    <div class="attachment-media-frame image">
+                                                        <img src="${f.url}" alt="${escapeHtml(f.original_name)}">
+                                                    </div>
+                                                ` : `
+                                                    <div class="attachment-media-frame doc">
+                                                        📄 ${escapeHtml(f.original_name)}
+                                                    </div>
+                                                `}
+                                                <div class="attachment-file-name">
+                                                    ${escapeHtml(f.original_name)}
+                                                </div>
+                                                <div class="attachment-card-footer">
+                                                    <a href="${f.url}" target="_blank" class="attachment-view-link">View Full Attachment &nearr;</a>
+                                                </div>
                                             </div>
-                                        ` : isAudio ? `
-                                            <div style="width: 100%; padding: 8px 10px; background: rgba(0,0,0,0.4); border-radius: 4px; display: flex; align-items: center; justify-content: center;">
-                                                <audio controls src="${f.url}" preload="metadata" style="width: 100%;"></audio>
-                                            </div>
-                                        ` : isImage ? `
-                                            <div style="width: 100%; height: 130px; background: #000; border-radius: 4px; overflow: hidden; display: flex; align-items: center; justify-content: center;">
-                                                <img src="${f.url}" alt="${escapeHtml(f.original_name)}" style="max-height: 100%; max-width: 100%; object-fit: contain;">
-                                            </div>
-                                        ` : `
-                                            <div style="padding: 16px; background: rgba(0,0,0,0.3); border-radius: 4px; font-size: 0.85rem; color: #94a3b8;">
-                                                📄 ${escapeHtml(f.original_name)}
-                                            </div>
-                                        `}
-                                        <div style="font-size: 0.82rem; font-weight: 600; color: #e2e8f0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
-                                            ${escapeHtml(f.original_name)}
-                                        </div>
-                                        <div style="margin-top: auto; padding-top: 6px;">
-                                            <a href="${f.url}" target="_blank" style="font-size: 0.76rem; color: #60a5fa; text-decoration: underline;">View Full Attachment &nearr;</a>
-                                        </div>
-                                    </div>
-                                `;
-                            }
-                        }).join('')}
+                                        `;
+                                    }
+                                }).join('')}
+                            </div>
+                        </div>
+                    ` : ''}
+
+                    <!-- Threaded Discussion Section -->
+                    <div class="discussion-section">
+                        <div class="discussion-section-header">
+                            <h3 class="review-section-title">
+                                <span>Governance Discussion Thread</span>
+                                <span class="comment-count-pill" id="comment-count-badge">
+                                    ${record.total_comments || 0}
+                                </span>
+                            </h3>
+                        </div>
+
+                        <!-- Comment Tree List -->
+                        <div class="comment-tree" id="comment-tree-container">
+                            ${renderCommentTreeHtml(rev.reviewer_comments || [], voters, currentUser)}
+                        </div>
+
+                        <!-- Top-Level Comment Composer -->
+                        <div class="top-comment-composer">
+                            <div class="composer-title">
+                                Leave a Reviewer Comment:
+                            </div>
+                            <textarea id="top-comment-input" class="form-textarea" rows="3" placeholder="Share peer feedback, brand justification, or remediation advice..."></textarea>
+                            <div class="composer-submit-row">
+                                <button class="btn-primary" id="btn-submit-top-comment">
+                                    Post Comment
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
-            ` : ''}
 
-            <!-- Governance Voting & Consensus Panel -->
-            <div class="review-voting-box">
-                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
-                    <div>
-                        <h3 style="font-size: 1.05rem; font-weight: 700; color: var(--text-primary);">🗳️ Peer Review & Voting Consensus</h3>
-                        <p style="font-size: 0.82rem; color: var(--text-muted); margin-top: 2px;">
-                            Submissions are open for 5 days of peer review. If <strong>Yes votes &gt; No votes</strong> upon expiration, the post automatically publishes.
-                        </p>
-                    </div>
-                    <div style="min-width: 200px;">
-                        ${renderConsensusBar(record.vote_approve, record.vote_not_approve)}
-                    </div>
-                </div>
+                <!-- RIGHT COLUMN: Sticky Rail with Vote buttons, Consensus summary, Approver controls, AI overall review -->
+                <aside class="review-sticky-rail">
+                    <!-- Governance Voting & Consensus Panel -->
+                    <div class="review-voting-box">
+                        <div class="rail-header-group">
+                            <h4>Peer Review & Voting Consensus</h4>
+                            <p class="rail-subtext">
+                                Submissions are open for 5 days of peer review. If <strong>Yes votes &gt; No votes</strong> upon expiration, the post automatically publishes.
+                            </p>
+                        </div>
 
-                ${!isVotingOpen ? `
-                    <div style="background: rgba(15, 23, 42, 0.8); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); padding: 14px; font-size: 0.85rem; color: var(--text-secondary);">
-                        ${record.status === 'APPROVED' ? `
-                            <strong style="color: #34d399;">✓ Voting Concluded — Consensus Reached:</strong> Post approved (${record.vote_approve} Yes vs ${record.vote_not_approve} No) and automatically dispatched to organization published channels.
+                        <div class="rail-consensus-bar-box">
+                            ${renderConsensusBar(record.vote_approve, record.vote_not_approve)}
+                        </div>
+
+                        ${!isVotingOpen ? `
+                            <div class="voting-concluded-banner ${record.status === 'APPROVED' ? 'approved' : 'rejected'}">
+                                ${record.status === 'APPROVED' ? `
+                                    <div class="concluded-title">Consensus Reached &mdash; Approved</div>
+                                    <p class="concluded-desc">Post approved (${record.vote_approve} Yes vs ${record.vote_not_approve} No) and automatically dispatched to organization published channels.</p>
+                                ` : `
+                                    <div class="concluded-title">Consensus Blocked &mdash; Rejected</div>
+                                    <p class="concluded-desc">Post rejected (${record.vote_approve} Yes vs ${record.vote_not_approve} No) due to unaddressed brand deviations.</p>
+                                `}
+                            </div>
                         ` : `
-                            <strong style="color: #f87171;">✕ Voting Concluded — Consensus Blocked:</strong> Post rejected (${record.vote_approve} Yes vs ${record.vote_not_approve} No) due to unaddressed brand deviations.
-                        `}
-                    </div>
-                ` : `
-                    <div class="voting-actions-bar">
-                        ${canApprove ? `
-                            <button class="btn-vote btn-vote-yes ${userVote === 'yes' ? 'active' : ''}" id="btn-vote-yes" data-id="${record.id}">
-                                👍 Vote to Approve (Yes) • ${record.vote_approve}
-                            </button>
-                            <button class="btn-vote btn-vote-no ${userVote === 'no' ? 'active' : ''}" id="btn-vote-no" data-id="${record.id}">
-                                👎 Vote to Reject (No) • ${record.vote_not_approve}
-                            </button>
-                            <span style="font-size: 0.78rem; color: var(--text-muted); margin-left: 8px;">
-                                (Click your vote again to revoke or switch)
-                            </span>
-                        ` : `
-                            <div style="background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.25); border-radius: var(--radius-sm); padding: 10px 14px; font-size: 0.82rem; color: #fbbf24; width: 100%;">
-                                🔒 <strong>READ-ONLY:</strong> Your account (${escapeHtml(currentUser.user_name)}) does not possess voting authority (<code>can_approve = 'N'</code>). You may review issues and leave comments, but cannot cast votes.
+                            <div class="voting-actions-bar">
+                                ${canApprove ? `
+                                    <div class="vote-buttons-stack">
+                                        <button class="btn-vote btn-vote-yes ${userVote === 'yes' ? 'active' : ''}" id="btn-vote-yes" data-id="${record.id}">
+                                            <span>Approve (Yes)</span>
+                                            <span class="vote-count-number">${record.vote_approve}</span>
+                                        </button>
+                                        <button class="btn-vote btn-vote-no ${userVote === 'no' ? 'active' : ''}" id="btn-vote-no" data-id="${record.id}">
+                                            <span>Not approve (No)</span>
+                                            <span class="vote-count-number">${record.vote_not_approve}</span>
+                                        </button>
+                                    </div>
+                                    <div class="vote-revoke-hint">
+                                        (Click your vote again to revoke or switch)
+                                    </div>
+                                ` : `
+                                    <div class="readonly-explanatory-note">
+                                        <span class="readonly-title">Read-Only</span>
+                                        <p>Your account (${escapeHtml(currentUser.user_name)}) does not possess voting authority (<code>can_approve = 'N'</code>). You may review issues and leave comments, but cannot cast votes.</p>
+                                    </div>
+                                `}
                             </div>
                         `}
                     </div>
-                `}
-            </div>
 
-            <!-- Threaded Discussion Section -->
-            <div class="discussion-section">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-                    <h3 style="font-size: 1rem; font-weight: 700; color: var(--text-primary); display: flex; align-items: center; gap: 8px;">
-                        <span>💬 Governance Discussion Thread</span>
-                        <span style="font-size: 0.76rem; background: var(--bg-surface-elevated); color: var(--text-secondary); padding: 2px 8px; border-radius: 12px;" id="comment-count-badge">
-                            ${record.total_comments || 0}
-                        </span>
-                    </h3>
-                </div>
-
-                <!-- Comment Tree List -->
-                <div class="comment-tree" id="comment-tree-container">
-                    ${renderCommentTreeHtml(rev.reviewer_comments || [], voters, currentUser)}
-                </div>
-
-                <!-- Top-Level Comment Composer -->
-                <div style="margin-top: 24px; padding-top: 18px; border-top: 1px solid var(--border-subtle);">
-                    <div style="font-size: 0.84rem; font-weight: 600; color: var(--text-primary); margin-bottom: 8px;">
-                        Leave a Reviewer Comment:
-                    </div>
-                    <textarea id="top-comment-input" class="form-textarea" rows="3" placeholder="Share peer feedback, brand justification, or remediation advice..." style="background: #090d16;"></textarea>
-                    <div style="display: flex; justify-content: flex-end; margin-top: 8px;">
-                        <button class="btn-primary" id="btn-submit-top-comment" style="font-size: 0.82rem; padding: 8px 16px;">
-                            Post Comment
+                    <!-- Approver Controls (Demo Simulation) -->
+                    <div class="card rail-card approver-controls-card">
+                        <div class="rail-card-heading">
+                            <span class="rail-card-eyebrow">Governance Action</span>
+                            <h4>Approver Controls</h4>
+                        </div>
+                        <p class="rail-card-info">Simulate the 5-day expiration window to tally consensus immediately.</p>
+                        <button class="btn-secondary btn-demo-finalize" id="btn-demo-finalize-top">
+                            <span>Simulate 5 Days Elapsed (Close Vote)</span>
                         </button>
                     </div>
-                </div>
+
+                    <!-- AI Overall Review Card -->
+                    <div class="card rail-card ai-review-card">
+                        <div class="rail-card-heading">
+                            <span class="rail-card-eyebrow">Automated Audit</span>
+                            <h4>AI Overall Review</h4>
+                        </div>
+                        <div class="ai-review-rows">
+                            <div class="ai-review-row">
+                                <span class="ai-row-label">Status</span>
+                                <span class="ai-row-status ${rev.flagged_by_ai ? 'flagged' : 'clean'}">
+                                    ${rev.flagged_by_ai ? 'Flagged Deviations' : 'Passed Inspection'}
+                                </span>
+                            </div>
+                            <div class="ai-review-row">
+                                <span class="ai-row-label">Text Issues</span>
+                                <span class="ai-row-count">${textIssues.length}</span>
+                            </div>
+                            <div class="ai-review-row">
+                                <span class="ai-row-label">Media Flags</span>
+                                <span class="ai-row-count">${badFiles.length}</span>
+                            </div>
+                            ${goodFiles.length > 0 ? `
+                                <div class="ai-review-row">
+                                    <span class="ai-row-label">Passed Media</span>
+                                    <span class="ai-row-count">${goodFiles.length}</span>
+                                </div>
+                            ` : ''}
+                        </div>
+                        <div class="ai-review-footer-note">
+                            Automated governance audit completed via multimodal brand guidelines model.
+                        </div>
+                    </div>
+                </aside>
             </div>
         `;
 
@@ -777,7 +835,7 @@
     function renderCommentTreeHtml(comments, voters, currentUser, depth = 0) {
         if (!Array.isArray(comments) || comments.length === 0) {
             if (depth === 0) {
-                return `<div style="color: var(--text-muted); font-size: 0.82rem; padding: 12px 0;">No comments yet. Start the conversation above.</div>`;
+                return `<div class="review-empty-text" style="padding: 12px 0;">No comments yet. Start the conversation above.</div>`;
             }
             return '';
         }
@@ -786,16 +844,20 @@
             const voterChoice = voters[comment.user_id];
             const liked = Array.isArray(comment.liked_by) && comment.liked_by.includes(currentUser.user_id);
             const disliked = Array.isArray(comment.disliked_by) && comment.disliked_by.includes(currentUser.user_id);
+            const authorInitials = (comment.user_name || 'R').split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
 
             return `
                 <div class="comment-node ${depth > 0 ? 'nested-reply' : ''}" id="comment-node-${comment.comment_id}">
                     <div class="comment-header">
                         <div class="comment-author-badge">
-                            <strong style="color: var(--text-primary);">${escapeHtml(comment.user_name || 'Reviewer')}</strong>
-                            <span style="color: var(--text-muted); font-size: 0.74rem;">${escapeHtml(comment.designation || 'Staff')}</span>
+                            <div class="comment-avatar">${authorInitials}</div>
+                            <div class="comment-author-text">
+                                <strong class="comment-author-name">${escapeHtml(comment.user_name || 'Reviewer')}</strong>
+                                <span class="comment-author-designation">${escapeHtml(comment.designation || 'Staff')}</span>
+                            </div>
                             ${voterChoice === 'yes' ? `<span class="voter-tag yes">✓ Voted Yes</span>` : voterChoice === 'no' ? `<span class="voter-tag no">✕ Voted No</span>` : ''}
                         </div>
-                        <div style="color: var(--text-muted); font-size: 0.72rem;">
+                        <div class="comment-timestamp">
                             ${new Date(comment.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                         </div>
                     </div>
@@ -804,10 +866,12 @@
 
                     <div class="comment-actions">
                         <button class="btn-react btn-react-like ${liked ? 'active' : ''}" data-cid="${comment.comment_id}">
-                            👍 ${comment.likes || 0}
+                            <span>👍</span>
+                            <span class="react-count">${comment.likes || 0}</span>
                         </button>
                         <button class="btn-react btn-react-dislike ${disliked ? 'active' : ''}" data-cid="${comment.comment_id}">
-                            👎 ${comment.dislikes || 0}
+                            <span>👎</span>
+                            <span class="react-count">${comment.dislikes || 0}</span>
                         </button>
                         <button class="btn-reply-toggle" data-cid="${comment.comment_id}">
                             Reply
@@ -816,16 +880,16 @@
 
                     <!-- Inline Reply Composer (Hidden by default) -->
                     <div class="inline-reply-composer" id="reply-composer-${comment.comment_id}" style="display: none;">
-                        <textarea class="form-textarea" rows="2" placeholder="Write a reply..." style="background: #060911; font-size: 0.82rem;"></textarea>
-                        <div style="display: flex; justify-content: flex-end; gap: 8px;">
-                            <button class="btn-secondary btn-cancel-reply" data-cid="${comment.comment_id}" style="font-size: 0.76rem; padding: 4px 10px;">Cancel</button>
-                            <button class="btn-primary btn-submit-reply" data-cid="${comment.comment_id}" style="font-size: 0.76rem; padding: 4px 10px;">Submit Reply</button>
+                        <textarea class="form-textarea" rows="2" placeholder="Write a reply..."></textarea>
+                        <div class="reply-composer-actions">
+                            <button class="btn-secondary btn-cancel-reply" data-cid="${comment.comment_id}">Cancel</button>
+                            <button class="btn-primary btn-submit-reply" data-cid="${comment.comment_id}">Submit Reply</button>
                         </div>
                     </div>
 
                     <!-- Nested Replies -->
                     ${Array.isArray(comment.replies) && comment.replies.length > 0 ? `
-                        <div class="nested-replies-list" style="margin-top: 10px;">
+                        <div class="nested-replies-list">
                             ${renderCommentTreeHtml(comment.replies, voters, currentUser, depth + 1)}
                         </div>
                     ` : ''}
