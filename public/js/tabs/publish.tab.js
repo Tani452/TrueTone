@@ -188,6 +188,9 @@ function publish_tab() {
 
     const previewModal = document.createElement('div');
     previewModal.id = 'tt-file-preview-modal';
+    previewModal.setAttribute('role', 'dialog');
+    previewModal.setAttribute('aria-modal', 'true');
+    previewModal.setAttribute('aria-labelledby', 'tt-modal-file-title');
     previewModal.innerHTML = `
         <div class="file-preview-content">
             <div class="file-preview-header">

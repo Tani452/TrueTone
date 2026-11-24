@@ -1164,3 +1164,58 @@
 .action-access-denied .banner-status-msg {
     margin-top: 4px;
 }
+
+/* -----------------------------------------------------------------------------
+   RESPONSIVE REFLOW (768px, 390px)
+   ----------------------------------------------------------------------------- */
+@media (max-width: 768px) {
+    .actions-cards-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .actions-filter-bar {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+    }
+
+    .actions-filter-group {
+        width: 100%;
+        overflow-x: auto;
+    }
+
+    .action-detail-metrics-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .action-detail-header-card {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 16px;
+    }
+}
+
+@media (max-width: 480px) {
+    .actions-header-bar {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .actions-sync-btn {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .action-card-top {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+
+    .action-card-footer {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+}
+

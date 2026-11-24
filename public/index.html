@@ -5,14 +5,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TrueTone | High-Performance Brand Tone Governance Platform</title>
-    <link rel="stylesheet" href="/css/tokens.css?v=1.1">
-    <link rel="stylesheet" href="/css/base.css?v=1.1">
-    <link rel="stylesheet" href="/css/components.css?v=2.0">
-    <link rel="stylesheet" href="/css/shell.css?v=2.0">
-    <link rel="stylesheet" href="/css/publish.css?v=2.0">
-    <link rel="stylesheet" href="/css/guidelines.css?v=2.0">
-    <link rel="stylesheet" href="/css/reviews.css?v=2.0">
-    <link rel="stylesheet" href="/css/actions.css?v=2.0">
+    <link rel="stylesheet" href="/css/tokens.css?v=2.5">
+    <link rel="stylesheet" href="/css/base.css?v=2.5">
+    <link rel="stylesheet" href="/css/components.css?v=2.5">
+    <link rel="stylesheet" href="/css/shell.css?v=2.5">
+    <link rel="stylesheet" href="/css/publish.css?v=2.5">
+    <link rel="stylesheet" href="/css/guidelines.css?v=2.5">
+    <link rel="stylesheet" href="/css/reviews.css?v=2.5">
+    <link rel="stylesheet" href="/css/actions.css?v=2.5">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link
@@ -82,7 +82,8 @@
                     <span>Viewing as</span>
                 </div>
                 <select id="role-switcher-select" class="persona-select"
-                    title="Switch active persona to test conditional sidebar rendering">
+                    title="Switch active persona to test conditional sidebar rendering"
+                    aria-label="Demo Persona Switcher">
                     <!-- Dynamically populated by app.js from DEMO_PERSONAS -->
                 </select>
             </div>
@@ -140,7 +141,8 @@
                 <div class="top-bar-meta">
                     <span class="role-tag-pill" id="top-bar-user-badge">User Profile</span>
                     <button class="btn-refresh" id="global-refresh-btn"
-                        title="Refresh current tab data from PostgreSQL">
+                        title="Refresh current tab data from PostgreSQL"
+                        aria-label="Refresh workspace data">
                         <svg class="btn-icon" width="14" height="14" aria-hidden="true"><use href="#icon-refresh"></use></svg>
                         <span>Refresh</span>
                     </button>
@@ -156,7 +158,7 @@
     </div>
 
     <!-- Generic Modal Dialog for Approvals / Enforcements / Payloads -->
-    <div class="modal-overlay" id="generic-modal">
+    <div class="modal-overlay" id="generic-modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
         <div class="modal-box">
             <div class="modal-header">
                 <h3 id="modal-title">Dialog Title</h3>
@@ -171,23 +173,23 @@
     </div>
 
     <!-- High-Contrast Toast Container -->
-    <div id="toast-container"></div>
+    <div id="toast-container" aria-live="polite" aria-atomic="true"></div>
 
     <!-- Legacy / Modular Components for full backend test compatibility -->
-    <script src="/js/publish.tab.js?v=2.1"></script>
-    <script src="/js/review.tab.js?v=2.1"></script>
-    <script src="/js/logs.tab.js?v=2.1"></script>
-    <script src="/js/actions.tab.js?v=2.1"></script>
-    <script src="/js/users.tab.js?v=2.1"></script>
+    <script src="/js/publish.tab.js?v=2.5"></script>
+    <script src="/js/review.tab.js?v=2.5"></script>
+    <script src="/js/logs.tab.js?v=2.5"></script>
+    <script src="/js/actions.tab.js?v=2.5"></script>
+    <script src="/js/users.tab.js?v=2.5"></script>
 
     <!-- Tab Modules (Defining exact function names) -->
-    <script src="/js/tabs/publish.tab.js?v=2.4"></script>
-    <script src="/js/tabs/guidelines.tab.js?v=2.4"></script>
-    <script src="/js/tabs/reviews.tab.js?v=2.4"></script>
-    <script src="/js/tabs/action.tab.js?v=2.3"></script>
+    <script src="/js/tabs/publish.tab.js?v=2.5"></script>
+    <script src="/js/tabs/guidelines.tab.js?v=2.5"></script>
+    <script src="/js/tabs/reviews.tab.js?v=2.5"></script>
+    <script src="/js/tabs/action.tab.js?v=2.5"></script>
 
     <!-- Main Orchestrator -->
-    <script src="/js/app.js?v=2.4"></script>
+    <script src="/js/app.js?v=2.5"></script>
 </body>
 
 </html>

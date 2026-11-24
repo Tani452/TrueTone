@@ -1512,3 +1512,41 @@ tr:hover td {
     padding: 1px 4px;
     border-radius: 4px;
 }
+
+/* =============================================================================
+   9. RESPONSIVE HARDENING & ACCESSIBILITY (1440, 1024, 768, 390)
+   ============================================================================= */
+@media (max-width: 768px) {
+    /* Touch targets >= 40px on small screens */
+    button,
+    .btn,
+    .btn-primary,
+    .btn-secondary,
+    .btn-danger,
+    .btn-refresh,
+    .nav-btn,
+    .actions-filter-btn,
+    .reviews-filter-btn,
+    .tab-btn,
+    .persona-select,
+    select,
+    input[type="text"],
+    input[type="file"],
+    textarea {
+        min-height: 40px;
+    }
+
+    /* Modals fit small screens without horizontal scroll or viewport overflow */
+    .modal-box,
+    #generic-modal .modal-box,
+    #tt-file-preview-modal .modal-box,
+    #guideline-confirm-modal .modal-box,
+    #guideline-preview-modal .modal-box {
+        width: 92vw !important;
+        max-width: 92vw !important;
+        max-height: 88vh !important;
+        padding: 16px !important;
+        margin: 10px auto;
+    }
+}
+

@@ -138,6 +138,8 @@ function guidelines_tab() {
     const confirmModal = document.createElement('div');
     confirmModal.id = 'guideline-confirm-modal';
     confirmModal.className = 'modal-overlay';
+    confirmModal.setAttribute('role', 'dialog');
+    confirmModal.setAttribute('aria-modal', 'true');
     confirmModal.innerHTML = `
         <div class="modal-box" style="max-width: 560px;">
             <div class="modal-header">
@@ -166,6 +168,9 @@ function guidelines_tab() {
     const docModal = document.createElement('div');
     docModal.id = 'guideline-preview-modal';
     docModal.className = 'modal-overlay';
+    docModal.setAttribute('role', 'dialog');
+    docModal.setAttribute('aria-modal', 'true');
+    docModal.setAttribute('aria-labelledby', 'doc-modal-title');
     docModal.innerHTML = `
         <div class="modal-box" style="max-width: 780px;">
             <div class="modal-header">
