@@ -152,7 +152,7 @@ window.TrueTone = {
             li.className = 'nav-item';
             li.innerHTML = `
                 <button class="nav-btn ${this.activeTabId === 'publish' ? 'active' : ''}" id="nav-btn-publish" onclick="window.TrueTone.navigate('publish')">
-                    <span class="icon">📢</span>
+                    <span class="icon"><svg width="18" height="18" aria-hidden="true"><use href="#icon-publish"></use></svg></span>
                     <span>Publish</span>
                     <span class="badge-pill">Creator</span>
                 </button>
@@ -165,7 +165,7 @@ window.TrueTone = {
         liGuidelines.className = 'nav-item';
         liGuidelines.innerHTML = `
             <button class="nav-btn ${this.activeTabId === 'guidelines' ? 'active' : ''}" id="nav-btn-guidelines" onclick="window.TrueTone.navigate('guidelines')">
-                <span class="icon">📖</span>
+                <span class="icon"><svg width="18" height="18" aria-hidden="true"><use href="#icon-guidelines"></use></svg></span>
                 <span>Guidelines</span>
                 <span class="badge-pill">All</span>
             </button>
@@ -178,7 +178,7 @@ window.TrueTone = {
         const isApprover = user.can_approve === 'Y';
         liReview.innerHTML = `
             <button class="nav-btn ${this.activeTabId === 'reviews' ? 'active' : ''}" id="nav-btn-reviews" onclick="window.TrueTone.navigate('reviews')">
-                <span class="icon">📝</span>
+                <span class="icon"><svg width="18" height="18" aria-hidden="true"><use href="#icon-reviews"></use></svg></span>
                 <span>Review</span>
                 <span class="badge-pill">${isApprover ? 'Approver' : 'Read-Only'}</span>
             </button>
@@ -191,7 +191,7 @@ window.TrueTone = {
             liActions.className = 'nav-item';
             liActions.innerHTML = `
                 <button class="nav-btn ${this.activeTabId === 'action' ? 'active' : ''}" id="nav-btn-actions" onclick="window.TrueTone.navigate('action')">
-                    <span class="icon">🛡️</span>
+                    <span class="icon"><svg width="18" height="18" aria-hidden="true"><use href="#icon-actions"></use></svg></span>
                     <span>Actions</span>
                     <span class="badge-pill">Admin</span>
                 </button>

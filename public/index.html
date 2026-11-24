@@ -7,8 +7,8 @@
     <title>TrueTone | High-Performance Brand Tone Governance Platform</title>
     <link rel="stylesheet" href="/css/tokens.css?v=1.1">
     <link rel="stylesheet" href="/css/base.css?v=1.1">
-    <link rel="stylesheet" href="/css/shell.css?v=1.1">
     <link rel="stylesheet" href="/css/components.css?v=1.1">
+    <link rel="stylesheet" href="/css/shell.css?v=2.0">
     <link rel="stylesheet" href="/css/publish.css?v=1.1">
     <link rel="stylesheet" href="/css/guidelines.css?v=1.1">
     <link rel="stylesheet" href="/css/reviews.css?v=1.1">
@@ -21,6 +21,40 @@
 </head>
 
 <body>
+    <!-- Inline SVG Symbol Sprite for System Icons -->
+    <svg xmlns="http://www.w3.org/2000/svg" style="display: none;" aria-hidden="true">
+        <symbol id="icon-publish" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/>
+            <polyline points="16 6 12 2 8 6"/>
+            <line x1="12" y1="2" x2="12" y2="15"/>
+        </symbol>
+        <symbol id="icon-guidelines" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"/>
+            <path d="M6 6h10"/>
+            <path d="M6 10h10"/>
+        </symbol>
+        <symbol id="icon-reviews" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect width="8" height="4" x="8" y="2" rx="1" ry="1"/>
+            <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/>
+            <path d="m9 14 2 2 4-4"/>
+        </symbol>
+        <symbol id="icon-actions" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+            <path d="M12 8v4"/>
+            <path d="M12 16h.01"/>
+        </symbol>
+        <symbol id="icon-refresh" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/>
+            <path d="M21 3v5h-5"/>
+            <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/>
+            <path d="M3 21v-5h5"/>
+        </symbol>
+        <symbol id="icon-close" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18"/>
+            <line x1="6" y1="6" x2="18" y2="18"/>
+        </symbol>
+    </svg>
+
     <div class="app-container">
         <!-- =================================================================== -->
         <!-- 1. PERSISTENT LEFT SIDEBAR                                         -->
@@ -28,18 +62,24 @@
         <aside class="sidebar" id="app-sidebar">
             <!-- Brand Logo -->
             <div class="brand">
-                <div class="brand-icon">T</div>
+                <div class="brand-icon" aria-hidden="true">
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <rect x="2" y="7" width="2.5" height="6" rx="1.25" fill="currentColor"/>
+                        <rect x="6.5" y="3" width="2.5" height="14" rx="1.25" fill="currentColor"/>
+                        <rect x="11" y="5.5" width="2.5" height="9" rx="1.25" fill="currentColor"/>
+                        <rect x="15.5" y="8" width="2.5" height="4" rx="1.25" fill="currentColor"/>
+                    </svg>
+                </div>
                 <div class="brand-text">
                     <h1>TrueTone</h1>
                     <span>Brand Governance</span>
                 </div>
             </div>
 
-            <!-- Demo Persona Switcher (For Hackathon & Role Verification) -->
+            <!-- Demo Persona Switcher (Workspace Switcher Card) -->
             <div class="persona-switcher-box">
                 <div class="sidebar-section-label">
-                    <span>Demo Role Switcher</span>
-                    <span style="font-size: 0.6rem; color: var(--text-muted);">HACKATHON MODE</span>
+                    <span>Viewing as</span>
                 </div>
                 <select id="role-switcher-select" class="persona-select"
                     title="Switch active persona to test conditional sidebar rendering">
@@ -68,7 +108,7 @@
 
             <!-- Role-Based Navigation Buttons Container -->
             <nav class="sidebar-nav" id="sidebar-nav-container">
-                <div class="sidebar-section-label" style="padding: 0 4px; margin-bottom: 8px;">
+                <div class="sidebar-section-label">
                     <span>Navigation</span>
                 </div>
                 <ul id="sidebar-nav-list" class="nav-menu">
@@ -81,8 +121,8 @@
                 <div class="db-status-pill">
                     <div class="pulse-dot" id="db-health-dot"></div>
                     <div>
-                        <strong id="db-health-status" style="font-size: 0.78rem;">PostgreSQL Pool</strong>
-                        <div id="db-health-meta" style="font-size: 0.68rem; color: #64748b;">Checking health...</div>
+                        <strong id="db-health-status">PostgreSQL Pool</strong>
+                        <div id="db-health-meta">Checking health...</div>
                     </div>
                 </div>
             </div>
@@ -101,7 +141,8 @@
                     <span class="role-tag-pill" id="top-bar-user-badge">User Profile</span>
                     <button class="btn-refresh" id="global-refresh-btn"
                         title="Refresh current tab data from PostgreSQL">
-                        <span>↻</span> Refresh
+                        <svg class="btn-icon" width="14" height="14" aria-hidden="true"><use href="#icon-refresh"></use></svg>
+                        <span>Refresh</span>
                     </button>
                 </div>
             </header>
@@ -119,7 +160,9 @@
         <div class="modal-box">
             <div class="modal-header">
                 <h3 id="modal-title">Dialog Title</h3>
-                <button class="btn-close" id="modal-close-btn">&times;</button>
+                <button class="btn-close" id="modal-close-btn" aria-label="Close dialog">
+                    <svg width="16" height="16" aria-hidden="true"><use href="#icon-close"></use></svg>
+                </button>
             </div>
             <div id="modal-content">
                 <!-- Dynamically populated by openModal() -->
@@ -144,7 +187,7 @@
     <script src="/js/tabs/action.tab.js?v=2.3"></script>
 
     <!-- Main Orchestrator -->
-    <script src="/js/app.js?v=2.3"></script>
+    <script src="/js/app.js?v=2.4"></script>
 </body>
 
 </html>
